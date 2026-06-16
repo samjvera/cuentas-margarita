@@ -1,0 +1,1758 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Cuentas de Margarita · Gastos del viaje</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#FAF6EF;--surface:#FFFFFF;--surface-2:#F4EEE3;--ink:#103A3C;--ink-soft:#3F605F;
+  --muted:#7C928F;--line:#E8E0D2;--sea:#0EA5A0;--sea-dark:#0B7E7A;--sea-soft:#D8F0EC;
+  --coral:#FF7755;--coral-soft:#FFE4DA;--gold:#F6B64B;--sky:#7FB4D6;
+  --pos:#1FA971;--pos-soft:#DCF3E8;--neg:#E5604D;--neg-soft:#FBE2DD;
+  --shadow:0 1px 2px rgba(16,58,60,.05), 0 8px 24px rgba(16,58,60,.07);
+  --shadow-lg:0 12px 40px rgba(16,58,60,.16);--r:18px;--r-sm:12px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{font-family:'Plus Jakarta Sans',system-ui,-apple-system,Segoe UI,Roboto,sans-serif;background:var(--bg);color:var(--ink);-webkit-font-smoothing:antialiased;line-height:1.5;overflow-x:hidden}
+button{font-family:inherit;cursor:pointer;border:none;background:none;color:inherit}
+input,select{font-family:inherit;font-size:1rem}
+::selection{background:var(--sea-soft)}
+
+.app{max-width:760px;margin:0 auto;padding:0 16px 120px}
+.topbar{position:sticky;top:0;z-index:30;margin:0 -16px;padding:14px 16px 0;background:linear-gradient(180deg,var(--bg) 72%,rgba(250,246,239,0))}
+.brand{display:flex;align-items:center;gap:12px}
+.brand-mark{width:42px;height:42px;border-radius:13px;flex:none;position:relative;overflow:hidden;background:linear-gradient(160deg,#16C2B5 0%,#0B7E7A 60%);box-shadow:0 6px 16px rgba(11,126,122,.28)}
+.brand-mark::before{content:"";position:absolute;left:0;right:0;top:55%;bottom:0;background:linear-gradient(180deg,#0B7E7A,#0a5f5c)}
+.brand-mark::after{content:"";position:absolute;width:13px;height:13px;border-radius:50%;right:7px;top:7px;background:radial-gradient(circle at 35% 35%,#FFE7B8,#F6B64B);box-shadow:0 0 12px rgba(246,182,75,.8)}
+.brand h1{font-family:'Fraunces',serif;font-weight:600;font-size:1.22rem;letter-spacing:-.01em;line-height:1.05}
+.brand .sub{font-size:.72rem;color:var(--muted);font-weight:500}
+.cur-toggle{margin-left:auto;display:flex;background:var(--surface);border:1px solid var(--line);border-radius:999px;padding:3px;box-shadow:var(--shadow);flex:none}
+.cur-toggle button{padding:7px 11px;border-radius:999px;font-weight:700;font-size:.82rem;color:var(--muted);transition:.18s;min-width:34px}
+.cur-toggle button.on{background:var(--ink);color:#fff}
+
+.hero{margin-top:14px;background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:20px 20px 18px;box-shadow:var(--shadow);position:relative;overflow:hidden}
+.hero .horizon{position:absolute;inset:0 0 auto;height:5px;background:linear-gradient(90deg,var(--sea),var(--gold),var(--coral))}
+.hero .label{font-size:.76rem;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.08em;margin-top:4px}
+.hero .total{font-family:'Fraunces',serif;font-weight:600;font-size:2.6rem;letter-spacing:-.02em;line-height:1;margin-top:4px;word-break:break-word}
+.hero .total .cents{font-size:1.4rem;color:var(--muted)}
+.hero .meta{display:flex;gap:18px;margin-top:14px;flex-wrap:wrap}
+.hero .meta div{font-size:.82rem;color:var(--ink-soft)}
+.hero .meta b{display:block;font-family:'Fraunces',serif;font-size:1.12rem;color:var(--ink);font-weight:600}
+.ratepill{display:flex;align-items:center;gap:8px;width:100%;margin-top:12px;background:var(--surface);border:1px solid var(--line);border-radius:var(--r-sm);padding:11px 14px;box-shadow:var(--shadow);text-align:left}
+.ratepill .rt-lbl{font-size:.66rem;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--muted)}
+.ratepill .rt-val{font-weight:700;font-size:.9rem;color:var(--ink)}
+.ratepill .rt-val span{color:var(--sea-dark)}
+.ratepill .rt-go{margin-left:auto;font-size:.74rem;font-weight:700;color:var(--sea-dark)}
+
+.tabs{position:fixed;left:0;right:0;bottom:0;z-index:40;background:rgba(255,255,255,.92);backdrop-filter:blur(12px);border-top:1px solid var(--line);display:flex;justify-content:center;padding:8px 8px calc(8px + env(safe-area-inset-bottom))}
+.tabs-inner{display:flex;gap:2px;max-width:760px;width:100%;justify-content:space-around}
+.tab{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;padding:6px 2px;border-radius:12px;color:var(--muted);font-size:.68rem;font-weight:600;transition:.15s}
+.tab svg{width:22px;height:22px;stroke-width:2}
+.tab.on{color:var(--sea-dark)}
+.tab.on .ic{background:var(--sea-soft)}
+.tab .ic{width:46px;height:30px;display:flex;align-items:center;justify-content:center;border-radius:10px;transition:.15s}
+
+.view{display:none;animation:fade .3s ease}
+.view.on{display:block}
+@keyframes fade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+.sec-title{font-family:'Fraunces',serif;font-weight:600;font-size:1.25rem;margin:24px 2px 12px;letter-spacing:-.01em}
+.sec-title:first-child{margin-top:18px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--shadow)}
+.card-pad{padding:16px}
+
+.catbar{display:flex;flex-direction:column;gap:11px}
+.catrow{display:grid;grid-template-columns:26px 1fr auto;align-items:center;gap:10px}
+.catrow .emo{font-size:1.05rem;text-align:center}
+.catrow .barwrap{height:9px;background:var(--surface-2);border-radius:999px;overflow:hidden}
+.catrow .bar{height:100%;border-radius:999px;background:linear-gradient(90deg,var(--sea),var(--sea-dark));transition:width .5s cubic-bezier(.4,0,.2,1)}
+.catrow .nm{font-size:.82rem;font-weight:600;color:var(--ink-soft)}
+.catrow .amt{font-size:.84rem;font-weight:700;color:var(--ink)}
+.catrow .pct{font-size:.7rem;color:var(--muted);font-weight:600}
+
+.fab{position:fixed;right:max(16px,calc(50% - 380px + 16px));bottom:calc(78px + env(safe-area-inset-bottom));z-index:45;background:var(--coral);color:#fff;font-weight:700;font-size:.95rem;padding:14px 20px;border-radius:999px;box-shadow:0 10px 28px rgba(255,119,85,.45);display:flex;align-items:center;gap:8px;transition:.18s}
+.fab:hover{transform:translateY(-2px)}
+.fab svg{width:20px;height:20px;stroke-width:2.6}
+
+.tools{display:flex;gap:8px;margin:0 0 14px;flex-wrap:wrap;align-items:center}
+.search{flex:1;min-width:160px;display:flex;align-items:center;gap:8px;background:var(--surface);border:1px solid var(--line);border-radius:var(--r-sm);padding:9px 12px;box-shadow:var(--shadow)}
+.search svg{width:17px;height:17px;color:var(--muted);flex:none}
+.search input{border:none;outline:none;background:none;width:100%;color:var(--ink)}
+.chipfilter{display:flex;gap:6px;overflow-x:auto;padding-bottom:2px;scrollbar-width:none}
+.chipfilter::-webkit-scrollbar{display:none}
+.fchip{flex:none;padding:7px 12px;border-radius:999px;background:var(--surface);border:1px solid var(--line);font-size:.78rem;font-weight:600;color:var(--ink-soft);transition:.15s;white-space:nowrap}
+.fchip.on{background:var(--ink);color:#fff;border-color:var(--ink)}
+
+.exp{display:flex;align-items:center;gap:13px;padding:13px 14px;border-bottom:1px solid var(--line)}
+.exp:last-child{border-bottom:none}
+.exp .cat{width:40px;height:40px;border-radius:12px;background:var(--surface-2);display:flex;align-items:center;justify-content:center;font-size:1.15rem;flex:none}
+.exp .info{min-width:0;flex:1}
+.exp .d1{font-weight:600;font-size:.95rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.exp .d2{font-size:.76rem;color:var(--muted);margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.exp .d2 b{color:var(--ink-soft);font-weight:600}
+.exp .right{text-align:right;flex:none}
+.exp .val{font-weight:700;font-size:.96rem}
+.exp .orig{font-size:.7rem;color:var(--muted);margin-top:1px}
+.exp .repay{font-size:.72rem;color:var(--sea-dark);margin-top:4px;line-height:1.3;white-space:normal}
+.exp .repay b{font-weight:700}
+.exp .repay-cash{color:#7B5B2E;background:#FFF4E0;border-radius:6px;padding:2px 6px;display:inline-block}
+.exp .repay-bs{color:#5B4A00;background:#FDFAE0;border-radius:6px;padding:2px 6px;display:inline-block}
+/* botón $ cash más ancho */
+.ccy button#fcUSD_CASH{padding:0 8px;font-size:.75rem}
+.exp .acts{display:flex;gap:4px;margin-top:5px;justify-content:flex-end}
+.exp .acts button{width:26px;height:26px;border-radius:8px;display:flex;align-items:center;justify-content:center;color:var(--muted);background:var(--surface-2)}
+.exp .acts button:hover{color:var(--ink);background:var(--line)}
+.exp .acts svg{width:14px;height:14px}
+
+.seg{display:inline-flex;background:var(--surface);border:1px solid var(--line);border-radius:999px;padding:3px;box-shadow:var(--shadow);margin-bottom:4px}
+.seg button{padding:8px 16px;border-radius:999px;font-weight:700;font-size:.84rem;color:var(--muted);transition:.15s}
+.seg button.on{background:var(--sea);color:#fff}
+
+.balrow{display:grid;grid-template-columns:auto 1fr auto;gap:12px;align-items:center;padding:13px 14px;border-bottom:1px solid var(--line)}
+.balrow:last-child{border-bottom:none}
+.av{width:38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:.9rem;flex:none;box-shadow:0 2px 6px rgba(0,0,0,.12)}
+.avstack{display:flex}
+.avstack .av{margin-left:-10px;border:2px solid var(--surface)}
+.avstack .av:first-child{margin-left:0}
+.balname{font-weight:600;font-size:.92rem}
+.balsub{font-size:.74rem;color:var(--muted)}
+.diverge{position:relative;height:30px;margin-top:5px}
+.diverge .axis{position:absolute;left:50%;top:0;bottom:0;width:1px;background:var(--line)}
+.diverge .seg-bar{position:absolute;top:6px;height:18px;border-radius:6px;transition:width .5s,left .5s}
+.diverge .seg-bar.pos{background:linear-gradient(90deg,var(--pos),#15875b);left:50%}
+.diverge .seg-bar.neg{background:linear-gradient(90deg,#c94632,var(--neg));right:50%}
+.balamt{text-align:right;flex:none;min-width:84px}
+.balamt .n{font-weight:700;font-size:.96rem}
+.balamt .t{font-size:.66rem;font-weight:700;text-transform:uppercase;letter-spacing:.04em}
+.pos-c{color:var(--pos)}.neg-c{color:var(--neg)}.zero-c{color:var(--muted)}
+
+.settle-head{padding:14px;border-bottom:1px solid var(--line)}
+.settle-head .top{display:flex;align-items:center;gap:12px}
+.settle-head .big{font-family:'Fraunces',serif;font-size:2rem;font-weight:600;line-height:1}
+.settle-head .lbl{font-size:.82rem;color:var(--muted);font-weight:500}
+.settle-head .rate{font-size:.74rem;color:var(--sea-dark);font-weight:600;margin-top:8px}
+.tx{display:flex;align-items:center;gap:10px;padding:14px;border-bottom:1px solid var(--line)}
+.tx:last-child{border-bottom:none}
+.tx .arrow{flex:1;display:flex;align-items:center;gap:8px;min-width:0}
+.tx .who{font-weight:600;font-size:.9rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tx .arr{color:var(--coral);flex:none}
+.tx .arr svg{width:20px;height:20px;stroke-width:2.4}
+.tx .pay{font-weight:700;font-size:1rem;color:var(--sea-dark);white-space:nowrap;text-align:right}
+.tx .pay small{display:block;font-weight:600;font-size:.7rem;color:var(--muted)}
+.allset{text-align:center;padding:34px 20px}
+.allset .em{font-size:2.6rem}
+.allset .t1{font-family:'Fraunces',serif;font-size:1.3rem;font-weight:600;margin-top:8px}
+.allset .t2{color:var(--muted);font-size:.9rem;margin-top:4px}
+
+.field{padding:14px;border-bottom:1px solid var(--line)}
+.field:last-child{border-bottom:none}
+.field label{display:block;font-weight:600;font-size:.9rem;margin-bottom:3px}
+.field .hint{font-size:.76rem;color:var(--muted);margin-bottom:9px}
+.rate-in{display:flex;align-items:center;gap:8px;font-weight:600;font-size:.92rem}
+.rate-in input{flex:1;max-width:160px;padding:10px 12px;border:1px solid var(--line);border-radius:10px;text-align:right;background:var(--bg);font-weight:700}
+.rate-in input:focus{outline:2px solid var(--sea);border-color:transparent}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:7px;padding:11px 16px;border-radius:12px;font-weight:700;font-size:.88rem;transition:.15s}
+.btn-ghost{background:var(--surface-2);color:var(--ink)}
+.btn-ghost:hover{background:var(--line)}
+.btn-danger{background:var(--neg-soft);color:var(--neg)}
+.btn-danger:hover{background:#f6cfc8}
+.btn-sea{background:var(--sea);color:#fff}
+.btn-sea:hover{background:var(--sea-dark)}
+.btnrow{display:flex;gap:9px;flex-wrap:wrap}
+.people-grid{display:flex;flex-wrap:wrap;gap:8px}
+.ptag{display:flex;align-items:center;gap:7px;background:var(--bg);border:1px solid var(--line);border-radius:999px;padding:5px 12px 5px 5px;font-size:.82rem;font-weight:600}
+.ptag .av{width:26px;height:26px;font-size:.72rem}
+
+.empty{text-align:center;padding:46px 24px;color:var(--muted)}
+.empty .em{font-size:2.4rem;opacity:.85}
+.empty .t1{font-family:'Fraunces',serif;font-size:1.2rem;color:var(--ink);font-weight:600;margin-top:10px}
+.empty .t2{font-size:.88rem;margin-top:5px;max-width:300px;margin-inline:auto}
+
+.scrim{position:fixed;inset:0;z-index:60;background:rgba(16,40,40,.42);backdrop-filter:blur(3px);display:none;align-items:flex-end;justify-content:center}
+.scrim.on{display:flex;animation:fade .2s}
+.modal{background:var(--surface);width:100%;max-width:560px;max-height:92vh;border-radius:24px 24px 0 0;overflow-y:auto;box-shadow:var(--shadow-lg);animation:slideup .32s cubic-bezier(.2,.9,.3,1)}
+@keyframes slideup{from{transform:translateY(40px);opacity:.6}to{transform:none;opacity:1}}
+.modal-head{position:sticky;top:0;background:var(--surface);z-index:2;display:flex;align-items:center;gap:10px;padding:16px 18px 12px;border-bottom:1px solid var(--line)}
+.modal-head h2{font-family:'Fraunces',serif;font-weight:600;font-size:1.22rem;flex:1}
+.modal-head .x{width:34px;height:34px;border-radius:10px;background:var(--surface-2);display:flex;align-items:center;justify-content:center;color:var(--ink-soft)}
+.modal-body{padding:16px 18px 22px}
+.grabber{width:38px;height:4px;background:var(--line);border-radius:99px;margin:8px auto 0}
+
+.fl{margin-bottom:16px}
+.fl > label{display:block;font-weight:600;font-size:.85rem;margin-bottom:7px;color:var(--ink-soft)}
+.txtin{width:100%;padding:12px 13px;border:1px solid var(--line);border-radius:12px;background:var(--bg);color:var(--ink)}
+.txtin:focus{outline:2px solid var(--sea);border-color:transparent}
+.amt-group{display:flex;gap:8px}
+.amt-group .txtin{font-family:'Fraunces',serif;font-size:1.35rem;font-weight:600}
+.ccy{display:flex;background:var(--bg);border:1px solid var(--line);border-radius:12px;padding:3px;flex:none}
+.ccy button{padding:0 14px;border-radius:9px;font-weight:700;color:var(--muted)}
+.ccy button.on{background:var(--ink);color:#fff}
+
+.catpick{display:grid;grid-template-columns:repeat(4,1fr);gap:7px}
+.catpick button{display:flex;flex-direction:column;align-items:center;gap:3px;padding:9px 4px;border-radius:12px;background:var(--bg);border:1px solid var(--line);font-size:.68rem;font-weight:600;color:var(--ink-soft);transition:.13s}
+.catpick button .e{font-size:1.25rem}
+.catpick button.on{background:var(--sea-soft);border-color:var(--sea);color:var(--sea-dark)}
+.catpick button.addcat{border-style:dashed;color:var(--sea-dark);background:transparent}
+.catpick button.addcat .e{font-weight:700}
+.catpick .emptyhint{grid-column:1/-1;font-size:.78rem;color:var(--muted);margin-bottom:2px}
+.emojipal{display:flex;flex-wrap:wrap;gap:6px;margin-top:11px}
+.emojipal button{width:40px;height:40px;border-radius:11px;background:var(--bg);border:1px solid var(--line);font-size:1.25rem;display:flex;align-items:center;justify-content:center;transition:.12s}
+.emojipal button:hover{background:var(--sea-soft);border-color:var(--sea)}
+.catmrow{display:flex;align-items:center;gap:12px;padding:13px 14px;border-bottom:1px solid var(--line)}
+.catmrow:last-child{border-bottom:none}
+.catmemo{width:42px;height:42px;border-radius:12px;background:var(--surface-2);display:flex;align-items:center;justify-content:center;font-size:1.25rem;flex:none}
+.catminfo{flex:1;min-width:0}
+.catmname{font-weight:600;font-size:.95rem}
+.catmsub{font-size:.74rem;color:var(--muted)}
+.catmacts{display:flex;gap:6px}
+.catmacts button{width:33px;height:33px;border-radius:9px;background:var(--surface-2);color:var(--muted);display:flex;align-items:center;justify-content:center;transition:.13s}
+.catmacts button:hover{background:var(--line);color:var(--ink)}
+.catmacts svg{width:15px;height:15px}
+
+.payer{display:flex;gap:7px;flex-wrap:wrap}
+.ppick{display:flex;align-items:center;gap:6px;padding:5px 11px 5px 5px;border-radius:999px;background:var(--bg);border:1px solid var(--line);font-size:.8rem;font-weight:600;color:var(--ink-soft);transition:.13s}
+.ppick .av{width:24px;height:24px;font-size:.68rem}
+.ppick.on{border-color:var(--ink);background:var(--ink);color:#fff}
+.ppick.on .av{box-shadow:0 0 0 2px rgba(255,255,255,.5)}
+
+.splitmode{display:flex;background:var(--bg);border:1px solid var(--line);border-radius:12px;padding:3px;margin-bottom:11px}
+.splitmode button{flex:1;padding:9px;border-radius:9px;font-weight:600;font-size:.82rem;color:var(--muted)}
+.splitmode button.on{background:var(--surface);color:var(--ink);box-shadow:var(--shadow)}
+.quick{display:flex;gap:7px;margin-bottom:10px;flex-wrap:wrap}
+.quick button{font-size:.76rem;font-weight:600;color:var(--sea-dark);background:var(--sea-soft);padding:6px 11px;border-radius:999px}
+.quick button.alt{background:var(--surface-2);color:var(--ink-soft)}
+
+.coupleblock{margin-bottom:9px}
+.coupleblock .ctitle{font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);margin:0 2px 6px}
+.partgrid{display:flex;flex-wrap:wrap;gap:7px}
+.part{display:flex;align-items:center;gap:7px;padding:7px 10px;border-radius:12px;background:var(--bg);border:1px solid var(--line);font-size:.82rem;font-weight:600;transition:.13s;flex:1;min-width:130px}
+.part .av{width:26px;height:26px;font-size:.7rem}
+.part.on{border-color:var(--sea);background:var(--sea-soft)}
+.part .check{margin-left:auto;width:18px;height:18px;border-radius:6px;border:2px solid var(--line);display:flex;align-items:center;justify-content:center;flex:none}
+.part.on .check{background:var(--sea);border-color:var(--sea)}
+.part .check svg{width:11px;height:11px;color:#fff;stroke-width:3.4;opacity:0}
+.part.on .check svg{opacity:1}
+.part .exact{margin-left:auto;width:84px;padding:6px 8px;border:1px solid var(--line);border-radius:8px;text-align:right;font-weight:600;font-variant-numeric:tabular-nums}
+.part .exact:focus{outline:2px solid var(--sea);border-color:transparent}
+
+.splitnote{font-size:.8rem;color:var(--muted);margin-top:9px;display:flex;justify-content:space-between;align-items:center;gap:8px}
+.splitnote .warn{color:var(--neg);font-weight:600}
+.splitnote .ok{color:var(--pos);font-weight:600}
+.splitnote button{font-size:.74rem;color:var(--sea-dark);font-weight:700;text-decoration:underline}
+
+.save-bar{position:sticky;bottom:0;background:var(--surface);padding:13px 0 4px;border-top:1px solid var(--line);margin-top:6px}
+.save-bar .btn-sea{width:100%;padding:14px;font-size:1rem}
+.save-bar .btn-sea:disabled{opacity:.45;cursor:not-allowed}
+
+.toast{position:fixed;left:50%;bottom:calc(92px + env(safe-area-inset-bottom));transform:translateX(-50%) translateY(20px);background:var(--ink);color:#fff;padding:11px 18px;border-radius:999px;font-weight:600;font-size:.85rem;z-index:80;opacity:0;pointer-events:none;transition:.3s;box-shadow:var(--shadow-lg);max-width:88vw;text-align:center}
+.toast.on{opacity:1;transform:translateX(-50%) translateY(0)}
+
+@media (min-width:620px){.modal{border-radius:24px;margin-bottom:4vh}.scrim{align-items:center}.grabber{display:none}}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+@keyframes spin{to{transform:rotate(360deg)}}
+.conn-pill{display:flex;align-items:center;gap:6px;font-size:.72rem;font-weight:600;padding:5px 10px;border-radius:999px;margin-top:8px;margin-bottom:2px;border:1px solid var(--line);width:fit-content;transition:.3s}
+.conn-online{color:var(--pos);background:var(--pos-soft);border-color:var(--pos)}
+.conn-offline{color:var(--neg);background:var(--neg-soft);border-color:var(--neg)}
+.conn-connecting{color:var(--muted);background:var(--surface-2)}
+
+/* welcome screen */
+.welcome{position:fixed;inset:0;z-index:998;background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px;overflow-y:auto}
+.welcome-logo{width:64px;height:64px;border-radius:20px;background:linear-gradient(160deg,#16C2B5,#0B7E7A);box-shadow:0 10px 28px rgba(11,126,122,.35);display:flex;align-items:center;justify-content:center;font-size:2rem;margin-bottom:16px}
+.welcome h2{font-family:'Fraunces',serif;font-size:1.7rem;font-weight:600;color:var(--ink);text-align:center;margin-bottom:6px}
+.welcome .sub{color:var(--muted);font-size:.9rem;text-align:center;margin-bottom:28px}
+.welcome-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;width:100%;max-width:420px}
+.wpick{display:flex;flex-direction:column;align-items:center;gap:6px;padding:14px 8px;border-radius:16px;background:var(--surface);border:1px solid var(--line);box-shadow:var(--shadow);cursor:pointer;transition:.15s;-webkit-tap-highlight-color:transparent}
+.wpick:active{transform:scale(.96)}
+.wpick .wav{width:44px;height:44px;border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:1.1rem;box-shadow:0 3px 8px rgba(0,0,0,.15)}
+.wpick .wname{font-size:.78rem;font-weight:700;color:var(--ink)}
+.wpick .wpair{font-size:.64rem;color:var(--muted)}
+
+/* notificaciones de pago pendiente */
+.notif-banner{display:flex;align-items:flex-start;gap:12px;background:#FFF8E8;border:1.5px solid #F6B64B;border-radius:var(--r-sm);padding:13px 14px;margin-bottom:8px}
+.notif-banner .ni{font-size:1.2rem;flex:none;margin-top:1px}
+.notif-banner .nt{flex:1;min-width:0}
+.notif-banner .nt b{display:block;font-size:.88rem;font-weight:700;color:var(--ink);margin-bottom:2px}
+.notif-banner .nt span{font-size:.78rem;color:var(--ink-soft)}
+.notif-banner .na{display:flex;gap:6px;margin-top:8px;flex-wrap:wrap}
+.notif-banner .na button{padding:7px 12px;border-radius:9px;font-size:.76rem;font-weight:700}
+.notif-confirm{background:var(--pos);color:#fff}
+.notif-dismiss{background:var(--surface-2);color:var(--ink-soft)}
+
+/* tarjeta de transferencia en liquidar */
+.tx-card{padding:14px;border-bottom:1px solid var(--line)}
+.tx-card:last-child{border-bottom:none}
+.tx-main{display:flex;align-items:center;gap:10px}
+.tx-main .arrow{flex:1;display:flex;align-items:center;gap:8px;min-width:0}
+.tx-main .who{font-weight:600;font-size:.9rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tx-main .arr{color:var(--coral);flex:none}
+.tx-main .arr svg{width:20px;height:20px;stroke-width:2.4}
+.tx-main .pay{font-weight:700;font-size:1rem;color:var(--sea-dark);white-space:nowrap;text-align:right}
+.tx-main .pay small{display:block;font-weight:600;font-size:.7rem;color:var(--muted)}
+.tx-meta{margin-top:10px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.tx-settled{display:flex;align-items:center;gap:6px;font-size:.78rem;font-weight:600;color:var(--pos)}
+.tx-settled svg{width:15px;height:15px;stroke-width:2.8}
+.tx-pending{font-size:.76rem;color:var(--muted);font-style:italic}
+.tx-alert{display:flex;align-items:center;gap:5px;font-size:.76rem;font-weight:600;color:var(--gold);background:#FFF8E8;border:1px solid #F6B64B;padding:4px 10px;border-radius:999px}
+.tx-alert svg{width:13px;height:13px}
+.btn-settle{padding:8px 14px;border-radius:10px;font-size:.8rem;font-weight:700;background:var(--pos);color:#fff;transition:.15s}
+.btn-settle:hover{background:#178a57}
+.btn-alert{padding:8px 14px;border-radius:10px;font-size:.8rem;font-weight:700;background:var(--coral-soft);color:var(--coral);border:1px solid var(--coral);transition:.15s}
+.btn-alert:hover{background:#ffd5c8}
+.btn-unsettled{padding:8px 14px;border-radius:10px;font-size:.8rem;font-weight:700;background:var(--neg-soft);color:var(--neg);transition:.15s}
+
+/* user chip en topbar */
+.me-chip{display:flex;align-items:center;gap:6px;padding:4px 10px 4px 4px;border-radius:999px;background:var(--surface);border:1px solid var(--line);box-shadow:var(--shadow);cursor:pointer;font-size:.76rem;font-weight:700;color:var(--ink-soft);flex:none}
+.me-chip .av{width:26px;height:26px;font-size:.7rem}
+
+/* histórico de tasas */
+.ratehrow{display:flex;align-items:center;gap:10px;padding:11px 14px;border-bottom:1px solid var(--line);flex-wrap:wrap}
+.ratehrow:last-child{border-bottom:none}
+.ratehdate{font-size:.8rem;font-weight:700;color:var(--ink-soft);min-width:90px;flex:none}
+.ratehvals{display:flex;gap:6px;flex-wrap:wrap}
+.ratechip{font-size:.74rem;font-weight:700;padding:3px 9px;border-radius:999px;white-space:nowrap}
+.bcvchip{background:var(--sea-soft);color:var(--sea-dark)}
+.earchip{background:#EEF0FF;color:#4E59C7}
+.parchip{background:var(--coral-soft);color:var(--coral)}
+</style>
+</head>
+<body>
+<!-- Pantalla de carga mientras conecta Firebase -->
+<div id="loadingScreen" style="position:fixed;inset:0;z-index:999;background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px">
+  <div style="width:52px;height:52px;border-radius:16px;background:linear-gradient(160deg,#16C2B5,#0B7E7A);box-shadow:0 8px 24px rgba(11,126,122,.3);display:flex;align-items:center;justify-content:center;font-size:1.6rem">🏝️</div>
+  <div style="font-family:'Fraunces',serif;font-size:1.4rem;font-weight:600;color:var(--ink)">Cuentas de Margarita</div>
+  <div style="display:flex;align-items:center;gap:10px;color:var(--muted);font-size:.88rem;font-weight:500">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="animation:spin 1s linear infinite"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/></svg>
+    Conectando con Firebase…
+  </div>
+</div>
+
+<!-- Pantalla de bienvenida: ¿quién eres? -->
+<div id="welcomeScreen" class="welcome" style="display:none">
+  <div class="welcome-logo">🏝️</div>
+  <h2>Cuentas de Margarita</h2>
+  <div class="sub">¿Quién eres tú?</div>
+  <div class="welcome-grid" id="welcomeGrid"></div>
+</div>
+
+<div class="app">
+  <div class="topbar">
+    <div class="brand">
+      <div class="brand-mark" aria-hidden="true"></div>
+      <div>
+        <h1>Cuentas de Margarita</h1>
+        <div class="sub">Gastos del viaje · 11 viajeros</div>
+      </div>
+      <button class="me-chip" id="meChip" onclick="showWelcome()" title="Cambiar usuario"></button>
+      <div class="cur-toggle" role="group" aria-label="Moneda de visualización">
+        <button id="curUSD" class="on" onclick="setDisplayCur('USD')">$</button>
+        <button id="curEUR" onclick="setDisplayCur('EUR')">€</button>
+        <button id="curBs" onclick="setDisplayCur('Bs')">Bs</button>
+      </div>
+    </div>
+    <div id="connStatus" class="conn-pill conn-connecting"><span>🟡</span> Conectando…</div>
+  </div>
+
+  <!-- ===== RESUMEN ===== -->
+  <section id="v-resumen" class="view on">
+    <div id="notifBanners"></div>
+    <div class="hero">
+      <div class="horizon"></div>
+      <div class="label">Gasto total del viaje</div>
+      <div class="total" id="heroTotal">$0</div>
+      <div class="meta">
+        <div><b id="heroCount">0</b>gastos registrados</div>
+        <div><b id="heroPP">$0</b>promedio por persona</div>
+        <div><b id="heroTx">0</b>transferencias para saldar</div>
+      </div>
+      <button class="ratepill" id="ratePill" onclick="go('ajustes')"></button>
+    </div>
+
+    <div class="sec-title">Gasto por categoría</div>
+    <div class="card card-pad" id="catBreakdown"></div>
+
+    <div class="sec-title">¿Quién pagó más?</div>
+    <div class="card" id="paidRanking"></div>
+  </section>
+
+  <!-- ===== GASTOS ===== -->
+  <section id="v-gastos" class="view">
+    <div class="sec-title">Todos los gastos</div>
+    <div class="tools">
+      <div class="search">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
+        <input id="searchIn" placeholder="Buscar gasto, persona…" oninput="renderExpenses()">
+      </div>
+    </div>
+    <div class="chipfilter" id="catFilter"></div>
+    <div style="height:12px"></div>
+    <div class="card" id="expList"></div>
+  </section>
+
+  <!-- ===== BALANCES ===== -->
+  <section id="v-balances" class="view">
+    <div class="sec-title">Balances</div>
+    <div class="seg" role="group" aria-label="Modo de balance">
+      <button id="balIndiv" class="on" onclick="setView2('indiv')">Individual</button>
+      <button id="balPareja" onclick="setView2('pareja')">Por pareja</button>
+    </div>
+    <div style="font-size:.8rem;color:var(--muted);margin:8px 2px 12px">Verde = le deben · Coral = debe. Todo se calcula a partir de los aportes individuales.</div>
+    <div class="card" id="balList"></div>
+  </section>
+
+  <!-- ===== LIQUIDAR ===== -->
+  <section id="v-liquidar" class="view">
+    <div class="sec-title">Liquidación</div>
+    <div class="seg" role="group" aria-label="Modo de liquidación">
+      <button id="setIndiv" class="on" onclick="setView3('indiv')">Individual</button>
+      <button id="setPareja" onclick="setView3('pareja')">Por pareja</button>
+    </div>
+    <div style="font-size:.8rem;color:var(--muted);margin:8px 2px 14px">Quién le transfiere a quién, con la mínima cantidad de movimientos. Toca <b>Bs</b> arriba para ver los montos en bolívares.</div>
+    <div class="card" id="settleList"></div>
+  </section>
+
+  <!-- ===== AJUSTES ===== -->
+  <section id="v-ajustes" class="view">
+    <div class="sec-title">Ajustes</div>
+    <div class="card">
+      <div class="field">
+        <label>Tasas del día (Bs)</label>
+        <div class="hint">Toca el botón para traer las 3 tasas desde Monitor de Divisas (necesita internet). Quedan guardadas fijas hasta que vuelvas a actualizar. También puedes ajustarlas a mano.</div>
+        <button class="btn btn-sea" id="bcvBtn" onclick="updateFromBCV()" style="width:100%;margin-bottom:6px">🔄 Actualizar tasas (BCV + USDT)</button>
+        <div class="hint" id="bcvStatus" style="margin-bottom:11px"></div>
+        <div class="rate-in" style="margin-bottom:9px">BCV · Bs / $ <input id="bcvUsdIn" type="number" step="0.0001" min="0" inputmode="decimal" onchange="setBcvUsd(this.value)"></div>
+        <div class="rate-in" style="margin-bottom:9px">Euro · Bs / € <input id="bcvEurIn" type="number" step="0.0001" min="0" inputmode="decimal" onchange="setBcvEur(this.value)"></div>
+        <div class="rate-in">USDT/Paralelo · Bs / $ <input id="parUsdIn" type="number" step="0.0001" min="0" inputmode="decimal" onchange="setParUsd(this.value)"></div>
+        <div class="hint" id="derivedRate" style="margin-top:9px;margin-bottom:0"></div>
+      </div>
+      <div class="field">
+        <label>Tasa activa para mostrar en Bs</label>
+        <div class="hint">Cuál tasa de dólar se usa al ver los montos en bolívares (en Resumen, Balances y Liquidar). El euro siempre usa su tasa.</div>
+        <div class="ccy" style="width:max-content">
+          <button id="mode_bcv" class="on" onclick="setBsMode('bcv')">BCV</button>
+          <button id="mode_par" onclick="setBsMode('par')">USDT/Par</button>
+        </div>
+      </div>
+      <div class="field">
+        <label>Moneda por defecto al agregar gastos</label>
+        <div class="hint">Los gastos se cargan en $ o €; el bolívar se usa solo para mostrar cuánto pagar.</div>
+        <div class="ccy" style="width:max-content">
+          <button id="defUSD"      class="on" onclick="setDefaultCur('USD')">$</button>
+          <button id="defUSD_CASH"           onclick="setDefaultCur('USD_CASH')">$ cash</button>
+          <button id="defEUR"                onclick="setDefaultCur('EUR')">€</button>
+          <button id="defBs"                 onclick="setDefaultCur('Bs')">Bs</button>
+        </div>
+      </div>
+      <div class="field">
+        <label>Respaldo de datos</label>
+        <div class="hint">Exporta para compartir el archivo con el grupo, o impórtalo en otro teléfono.</div>
+        <div class="btnrow">
+          <button class="btn btn-ghost" onclick="exportData()">⬇ Exportar</button>
+          <button class="btn btn-ghost" onclick="document.getElementById('importFile').click()">⬆ Importar</button>
+          <input type="file" id="importFile" accept="application/json" style="display:none" onchange="importData(event)">
+        </div>
+      </div>
+      <div class="field">
+        <label>Empezar de cero</label>
+        <div class="hint">Borra todos los gastos registrados. No se puede deshacer.</div>
+        <div class="btnrow">
+          <button class="btn btn-danger" onclick="wipeAll()">Borrar todos los gastos</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="sec-title">Histórico de tasas</div>
+    <div class="card">
+      <div class="field" style="padding-bottom:10px">
+        <div class="hint" style="margin-bottom:0">Cada vez que tocas "Actualizar" se guarda la tasa del día. También se guarda la tasa que usó cada gasto individualmente.</div>
+      </div>
+      <div id="rateHistoryList"></div>
+    </div>
+
+    <div class="sec-title">Categorías de gasto</div>
+    <div class="card">
+      <div id="catManager"></div>
+      <div class="field" style="border-top:1px solid var(--line)">
+        <button class="btn btn-sea" onclick="openCatModal()" style="width:100%">＋ Agregar categoría</button>
+      </div>
+    </div>
+
+    <div class="sec-title">Viajeros</div>
+    <div class="card card-pad">
+      <div style="font-size:.82rem;color:var(--muted);margin-bottom:12px">5 parejas y 1 solo. Las parejas se consolidan en la vista “Por pareja”.</div>
+      <div class="people-grid" id="peopleRef"></div>
+    </div>
+    <div style="text-align:center;color:var(--muted);font-size:.74rem;margin-top:22px;padding-bottom:8px">Hecho para el viaje a Isla de Margarita 🏝️ · Funciona sin conexión</div>
+  </section>
+</div>
+
+<button class="fab" id="fab" onclick="openForm()">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M12 5v14M5 12h14"/></svg>
+  Agregar gasto
+</button>
+
+<nav class="tabs">
+  <div class="tabs-inner">
+    <button class="tab on" data-v="resumen" onclick="go('resumen')">
+      <span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M3 13h8V3H3zM13 21h8V8h-8zM3 21h8v-5H3zM13 5h8V3h-8z"/></svg></span>Resumen</button>
+    <button class="tab" data-v="gastos" onclick="go('gastos')">
+      <span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M4 6h16M4 12h16M4 18h10"/></svg></span>Gastos</button>
+    <button class="tab" data-v="balances" onclick="go('balances')">
+      <span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M12 3v18M3 8l9-5 9 5M6 12l6 4 6-4"/></svg></span>Balances</button>
+    <button class="tab" data-v="liquidar" onclick="go('liquidar')">
+      <span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M7 7h11l-3-3M17 17H6l3 3"/></svg></span>Liquidar</button>
+    <button class="tab" data-v="ajustes" onclick="go('ajustes')">
+      <span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="3"/><path d="M19 12a7 7 0 0 0-.1-1l2-1.5-2-3.4-2.3 1a7 7 0 0 0-1.7-1l-.3-2.6h-4l-.3 2.6a7 7 0 0 0-1.7 1l-2.3-1-2 3.4L5 11a7 7 0 0 0 0 2l-2 1.5 2 3.4 2.3-1a7 7 0 0 0 1.7 1l.3 2.6h4l.3-2.6a7 7 0 0 0 1.7-1l2.3 1 2-3.4-2-1.5a7 7 0 0 0 .1-1z"/></svg></span>Ajustes</button>
+  </div>
+</nav>
+
+<!-- ===== Modal: gasto ===== -->
+<div class="scrim" id="scrim" onclick="if(event.target===this)closeForm()">
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="formTitle">
+    <div class="grabber"></div>
+    <div class="modal-head">
+      <h2 id="formTitle">Nuevo gasto</h2>
+      <button class="x" onclick="closeForm()" aria-label="Cerrar">
+        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M6 6l12 12M18 6 6 18"/></svg>
+      </button>
+    </div>
+    <div class="modal-body">
+      <div class="fl">
+        <label for="fDesc">¿Qué gasto fue?</label>
+        <input id="fDesc" class="txtin" placeholder="Ej: Cena en El Yaque" oninput="validateForm()">
+      </div>
+      <div class="fl">
+        <label>Monto y moneda</label>
+        <div class="amt-group">
+          <input id="fAmount" class="txtin" type="number" inputmode="decimal" step="0.01" min="0" placeholder="0.00" oninput="onAmountChange()">
+          <div class="ccy" id="ccyPick">
+            <button id="fcUSD"      class="on" onclick="setFormCur('USD')">$</button>
+            <button id="fcUSD_CASH"          onclick="setFormCur('USD_CASH')">$ cash</button>
+            <button id="fcEUR"               onclick="setFormCur('EUR')">€</button>
+            <button id="fcBs"                onclick="setFormCur('Bs')">Bs</button>
+          </div>
+        </div>
+        <div class="hint" id="curHint" style="margin-top:7px;margin-bottom:0"></div>
+      </div>
+      <div class="fl" id="rateTypeFl">
+        <label>Si te repagan en Bs, ¿a qué tasa?</label>
+        <div class="splitmode" id="rateTypePick">
+          <button type="button" id="rt_bcv" onclick="setRateType('bcv')">BCV</button>
+          <button type="button" id="rt_par" onclick="setRateType('par')">Paralelo</button>
+        </div>
+        <div class="splitnote" id="rateTypeNote"></div>
+      </div>
+      <div class="fl">
+        <label>Categoría</label>
+        <div class="catpick" id="catPick"></div>
+      </div>
+      <div class="fl">
+        <label>¿Quién(es) pagó?</label>
+        <div class="hint" style="margin-bottom:9px">Selecciona una o varias personas. Los montos se reparten en el total del gasto; si no los pones a mano, se distribuyen igual entre los que pagaron.</div>
+        <div id="payerPick"></div>
+        <div class="splitnote" id="payerNote"></div>
+        <div style="margin-top:8px;display:flex;gap:8px">
+          <button type="button" style="font-size:.74rem;font-weight:700;color:var(--sea-dark);text-decoration:underline;background:none;border:none;cursor:pointer" onclick="payerSplitEqual()">Repartir pagos en partes iguales</button>
+        </div>
+      </div>
+      <div class="fl">
+        <label>¿Entre quiénes se divide?</label>
+        <div class="splitmode">
+          <button id="smEqual" class="on" onclick="setSplitMode('equal')">Por partes iguales</button>
+          <button id="smExact" onclick="setSplitMode('exact')">Montos exactos</button>
+        </div>
+        <div class="quick">
+          <button onclick="selectAllParts()">Seleccionar todos</button>
+          <button class="alt" onclick="clearParts()">Quitar todos</button>
+        </div>
+        <div id="partList"></div>
+        <div class="splitnote" id="splitNote"></div>
+      </div>
+      <div class="fl">
+        <label for="fDate">Fecha</label>
+        <input id="fDate" class="txtin" type="date">
+      </div>
+      <div class="save-bar">
+        <button class="btn btn-sea" id="saveBtn" onclick="saveExpense()">Guardar gasto</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<!-- ===== Modal: categoría ===== -->
+<div class="scrim" id="catScrim" onclick="if(event.target===this)closeCatModal()">
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="catTitle" style="max-width:460px">
+    <div class="grabber"></div>
+    <div class="modal-head">
+      <h2 id="catTitle">Nueva categoría</h2>
+      <button class="x" onclick="closeCatModal()" aria-label="Cerrar">
+        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M6 6l12 12M18 6 6 18"/></svg>
+      </button>
+    </div>
+    <div class="modal-body">
+      <div class="fl">
+        <label for="catEmoji">Ícono</label>
+        <input id="catEmoji" class="txtin" maxlength="4" style="font-size:1.7rem;text-align:center;width:92px" placeholder="🏷️" oninput="validateCat()">
+        <div class="emojipal" id="emojiPal"></div>
+      </div>
+      <div class="fl">
+        <label for="catName">Nombre</label>
+        <input id="catName" class="txtin" placeholder="Ej: Comida, Posada, Lancha, Propinas…" oninput="validateCat()">
+      </div>
+      <div class="save-bar">
+        <button class="btn btn-sea" id="catSaveBtn" onclick="saveCat()">Guardar categoría</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ============ Datos base ============ */
+const PEOPLE = ['Angela','Matias','Arturo','Maria','Samuel','Claudia','Ricardo','Victoria','Enrique','Daniela','Santiago'];
+const DISP = {Matias:'Matías', Maria:'María'};
+const disp = p => DISP[p] || p;
+const COUPLES = [
+  {id:'c1', members:['Angela','Matias']},
+  {id:'c2', members:['Arturo','Maria']},
+  {id:'c3', members:['Samuel','Claudia']},
+  {id:'c4', members:['Ricardo','Victoria']},
+  {id:'c5', members:['Enrique','Daniela']},
+];
+const SOLO = ['Santiago'];
+const COLORS = {
+  Angela:'#FF7755', Matias:'#FF9E5E', Arturo:'#0EA5A0', Maria:'#34C4AE',
+  Samuel:'#E0A23A', Claudia:'#EFC76A', Ricardo:'#9B6BD6', Victoria:'#C091E2',
+  Enrique:'#2FA565', Daniela:'#64C690', Santiago:'#5B82B2'
+};
+const coupleOf = p => COUPLES.find(c => c.members.includes(p));
+const coupleLabel = c => c.members.map(disp).join(' & ');
+
+/* Categorías: arrancan vacías; el grupo crea las suyas. */
+function catMap(){ const m={}; (DB.categories||[]).forEach(c=>m[c.id]=c); return m; }
+function getCat(id){ return catMap()[id] || {id:id, label:'Sin categoría', e:'🏷️'}; }
+function firstCatId(){ return (DB.categories&&DB.categories[0]) ? DB.categories[0].id : ''; }
+function newCatId(){ return 'cat_'+Date.now().toString(36)+Math.random().toString(36).slice(2,5); }
+
+/* ============ Estado / persistencia ============ */
+const KEY = 'margarita_v1';
+let DB = {
+  expenses: [],
+  categories: [],
+  rate: 1.08,
+  bcvUsd: 592.52,
+  bcvEur: 687.70,
+  parUsd: 789.67,
+  bsMode: 'bcv',
+  ratesDate: '',
+  ratesUpdated: '',
+  rateHistory: [],   // [{date:'2026-07-10', bcvUsd, bcvEur, parUsd}] un entry por día
+  displayCur: 'USD',
+  defaultCur: 'USD',
+};
+// El cambio €↔$ se deriva de las tasas BCV, así todo queda consistente.
+function recalcRate(){ if(DB.bcvUsd>0 && DB.bcvEur>0) DB.rate = DB.bcvEur/DB.bcvUsd; }
+// Bs por 1 USD según la tasa activa (BCV o Paralelo)
+function activeUsd(){ return DB.bsMode==='par' ? (DB.parUsd||DB.bcvUsd) : DB.bcvUsd; }
+function rateLabel(mode){ return mode==='par' ? 'USDT/Par' : 'BCV'; }
+// Bs por 1 unidad de la moneda del gasto, según un tipo de tasa
+function rateFor(cur, mode){ return cur==='EUR' ? (DB.bcvEur||0) : (mode==='par' ? (DB.parUsd||DB.bcvUsd) : DB.bcvUsd); }
+
+/* ============ Firebase — persistencia en tiempo real ============ */
+const FB_CFG = {
+  apiKey: "AIzaSyCrNy-CZtWrWvkwdYglgIWNwbIeXO3f7Ok",
+  authDomain: "margarita-2026-c17c5.firebaseapp.com",
+  databaseURL: "https://margarita-2026-c17c5-default-rtdb.firebaseio.com",
+  projectId: "margarita-2026-c17c5",
+  storageBucket: "margarita-2026-c17c5.firebasestorage.app",
+  messagingSenderId: "411046621934",
+  appId: "1:411046621934:web:6137741a93d93398aa79ff"
+};
+// Carga dinámica del SDK de Firebase (compat, sin bundler)
+let _fbReady = false, _saveQueue = false;
+let _fbDb = null, _fbRef = null;
+
+function loadFirebaseSDK(){
+  return new Promise(res=>{
+    if(window.firebase){ res(); return; }
+    const s1=document.createElement('script');
+    s1.src='https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js';
+    s1.onload=()=>{
+      const s2=document.createElement('script');
+      s2.src='https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js';
+      s2.onload=res; document.head.appendChild(s2);
+    };
+    document.head.appendChild(s1);
+  });
+}
+
+async function initFirebase(){
+  setStatus('connecting');
+  return new Promise(async (resolve, reject)=>{
+    try{
+      await loadFirebaseSDK();
+      const app = firebase.initializeApp(FB_CFG);
+      _fbDb  = firebase.database(app);
+      _fbRef = _fbDb.ref('margarita');
+
+      _fbDb.ref('.info/connected').on('value', snap=>{
+        setStatus(snap.val() ? 'online' : 'offline');
+      });
+
+      _fbRef.on('value', snap=>{
+        const data = snap.val();
+        if(data){
+          const remote = JSON.parse(data);
+          DB = applyDefaults(remote);
+          recalcRate();
+          syncSettings(); renderCatManager(); renderAll();
+        }
+        if(!_fbReady){
+          _fbReady = true;
+          if(!data){
+            const local = localStorage.getItem('margarita_v1');
+            if(local) try{ DB = applyDefaults(JSON.parse(local)); recalcRate(); }catch(e){}
+            pushToFirebase();
+          }
+          buildCatPick(); buildPayerPick(); buildPartList();
+          renderPeopleRef(); renderCatManager(); renderAll();
+          syncSettings();
+          document.getElementById('loadingScreen').style.display='none';
+          resolve();
+        }
+      });
+    }catch(e){
+      console.error('Firebase error:', e);
+      setStatus('offline');
+      loadLocal();
+      _fbReady = true;
+      buildCatPick(); buildPayerPick(); buildPartList();
+      renderPeopleRef(); renderCatManager(); renderAll();
+      syncSettings();
+      document.getElementById('loadingScreen').style.display='none';
+      reject(e);
+    }
+  });
+}
+
+function pushToFirebase(){
+  if(!_fbRef) return;
+  _fbRef.set(JSON.stringify(DB)).catch(e=>{ console.warn('save error',e); saveLocal(); });
+}
+
+// save() = escribe en Firebase (y localStorage de respaldo)
+function save(){
+  saveLocal();          // respaldo local inmediato
+  pushToFirebase();     // sincroniza con la nube
+}
+
+function saveLocal(){ try{ localStorage.setItem('margarita_v1', JSON.stringify(DB)); }catch(e){} }
+function loadLocal(){
+  try{
+    const raw = localStorage.getItem('margarita_v1');
+    if(raw) DB = applyDefaults(JSON.parse(raw));
+  }catch(e){}
+}
+
+function applyDefaults(d){
+  const base = {
+    expenses:[], categories:[], rate:1.08,
+    bcvUsd:592.52, bcvEur:687.70, parUsd:789.67,
+    bsMode:'bcv', ratesDate:'', ratesUpdated:'',
+    rateHistory:[],
+    displayCur:'USD', defaultCur:'USD',
+    settled:{}, alerts:{}
+  };
+  const out = Object.assign(base, d);
+  if(!Array.isArray(out.categories))  out.categories=[];
+  if(!Array.isArray(out.expenses))    out.expenses=[];
+  if(!Array.isArray(out.rateHistory)) out.rateHistory=[];
+  if(typeof out.settled!=='object'||Array.isArray(out.settled)) out.settled={};
+  if(typeof out.alerts!=='object' ||Array.isArray(out.alerts))  out.alerts={};
+  if(!(out.bcvUsd>0) && out.bsUsd>0) out.bcvUsd=out.bsUsd;
+  if(!(out.bcvEur>0) && out.bsEur>0) out.bcvEur=out.bsEur;
+  if(!(out.bcvUsd>0)) out.bcvUsd=592.52;
+  if(!(out.bcvEur>0)) out.bcvEur=687.70;
+  if(!(out.parUsd>0)) out.parUsd=789.67;
+  if(out.bsMode!=='par'&&out.bsMode!=='bcv') out.bsMode='bcv';
+  return out;
+}
+
+/* Indicador visual de conexión */
+function setStatus(s){
+  const el=document.getElementById('connStatus'); if(!el) return;
+  const cfg={
+    connecting:{ dot:'🟡', txt:'Conectando…',   cls:'conn-connecting' },
+    online:    { dot:'🟢', txt:'En línea · sync',cls:'conn-online'     },
+    offline:   { dot:'🔴', txt:'Sin conexión',   cls:'conn-offline'    },
+  }[s]||{dot:'⚪',txt:'',cls:''};
+  el.className='conn-pill '+cfg.cls;
+  el.innerHTML=`<span>${cfg.dot}</span> ${cfg.txt}`;
+}
+
+let _id = 1;
+function mk(desc,cat,amount,cur,payers,parts,mode,exact,date,rateType){
+  let rt, repayRate;
+  if(cur==='EUR')         { rt='eur';   repayRate=DB.bcvEur||0; }
+  else if(cur==='USD_CASH'){ rt='cash'; repayRate=null; }
+  else {
+    // USD digital y Bs: ambos usan tasa BCV o USDT/Par como referencia
+    rt = rateType||DB.bsMode;
+    repayRate = rateFor(cur, rt);
+  }
+  return {id:'e'+(_id++)+'_'+Date.now().toString(36)+Math.random().toString(36).slice(2,5),
+    desc,cat,amount,cur,payers,parts:[...parts],mode,exact:exact||{},date,
+    rateType:rt, repayRate, rateDate:(DB.ratesDate||'')};
+}
+
+/* ============ Moneda ============ */
+const SYM = {USD:'$', USD_CASH:'$ cash', EUR:'€', Bs:'Bs '};
+const CURS = ['USD','USD_CASH','EUR','Bs'];
+// Convierte cualquier moneda a USD como base de cálculo interna
+const toUSD = (amt,cur,repayRate) => {
+  if(cur==='EUR')      return amt * DB.rate;
+  if(cur==='Bs')       return repayRate>0 ? amt/repayRate : amt/(DB.bcvUsd||1);
+  return amt; // USD y USD_CASH valen igual en $
+};
+const nfp = n => Number(n||0).toLocaleString('es-VE',{minimumFractionDigits:2,maximumFractionDigits:2});
+// Formato de visualización en la moneda activa
+function fmt(usd, opts={}){
+  const cur = opts.cur || DB.displayCur;
+  let v;
+  if(cur==='Bs')            v = usd * activeUsd();
+  else if(cur==='EUR')      v = usd / DB.rate;
+  else                      v = usd;  // USD y USD_CASH
+  return (v<0?'-':'') + (SYM[cur]||'$') + nfp(Math.abs(v));
+}
+// Formato original del gasto (en su moneda de origen)
+function fmtOrig(amt,cur){
+  const sym = cur==='EUR'?'€': cur==='Bs'?'Bs ': cur==='USD_CASH'?'$ cash ':'$';
+  return sym + nfp(Math.abs(amt));
+}
+// Bs por 1 unidad de la moneda del gasto (para calcular el equivalente en $ de repago)
+function rateFor(cur, mode){
+  if(cur==='EUR')       return DB.bcvEur||0;
+  if(cur==='USD_CASH')  return null;   // repago en $ cash físico
+  // USD digital y Bs: ambos usan tasa BCV o USDT/Par
+  return mode==='par' ? (DB.parUsd||DB.bcvUsd) : (DB.bcvUsd||0);
+}
+// USD equivalente de un gasto en Bs (usando la tasa registrada)
+function expenseBs(e){
+  const r = e.repayRate>0 ? e.repayRate : rateFor(e.cur, e.rateType||DB.bsMode);
+  return r !== null ? e.amount * r : null;
+}
+
+/* ============ Motor de cálculo (centavos USD) ============ */
+function expenseShares(exp){
+  const out = {};
+  const rr = exp.repayRate||0;
+  if(exp.mode === 'exact'){
+    for(const p of exp.parts) out[p] = Math.round(toUSD(parseFloat(exp.exact[p])||0, exp.cur, rr)*100);
+  } else {
+    const totalC = Math.round(toUSD(exp.amount, exp.cur, rr)*100);
+    const n = exp.parts.length;
+    if(n>0){
+      const base = Math.floor(totalC/n); let rem = totalC - base*n;
+      for(const p of exp.parts){ out[p] = base + (rem>0?1:0); if(rem>0) rem--; }
+    }
+  }
+  return out;
+}
+function computeBalances(){
+  const paid = {}, owes = {};
+  PEOPLE.forEach(p=>{paid[p]=0;owes[p]=0;});
+  for(const exp of DB.expenses){
+    const rr = exp.repayRate||0;
+    const totalC = Math.round(toUSD(exp.amount, exp.cur, rr)*100);
+    if(exp.payers && typeof exp.payers==='object'){
+      for(const [p,amt] of Object.entries(exp.payers)){
+        if(paid[p]!==undefined) paid[p] += Math.round(toUSD(parseFloat(amt)||0, exp.cur, rr)*100);
+      }
+    } else if(exp.paidBy && paid[exp.paidBy]!==undefined){
+      paid[exp.paidBy] += (exp.mode==='exact')
+        ? Object.values(expenseShares(exp)).reduce((a,b)=>a+b,0) : totalC;
+    }
+    const sh = expenseShares(exp);
+    for(const p in sh) owes[p] += sh[p];
+  }
+  const net = {}; PEOPLE.forEach(p=> net[p] = paid[p]-owes[p]);
+  return {paid, owes, net};
+}
+function coupleBalances(net){
+  const rows = [];
+  for(const c of COUPLES) rows.push({key:c.id, kind:'couple', members:c.members, label:coupleLabel(c), net:c.members.reduce((s,m)=>s+net[m],0)});
+  for(const s of SOLO) rows.push({key:s, kind:'solo', members:[s], label:disp(s), net:net[s]});
+  return rows;
+}
+function settle(balances){
+  const debt = balances.filter(b=>b.net < -0.5).map(b=>({...b}));
+  const cred = balances.filter(b=>b.net > 0.5).map(b=>({...b}));
+  debt.sort((a,b)=>a.net-b.net); cred.sort((a,b)=>b.net-a.net);
+  const tx = []; let i=0,j=0;
+  while(i<debt.length && j<cred.length){
+    const d=debt[i], c=cred[j]; const amt=Math.min(-d.net,c.net);
+    if(amt>0.5) tx.push({from:d, to:c, amount:amt});
+    d.net+=amt; c.net-=amt;
+    if(Math.abs(d.net)<0.5) i++; if(Math.abs(c.net)<0.5) j++;
+  }
+  return tx;
+}
+
+/* ============ Avatares ============ */
+function avatar(p, cls=''){ return `<span class="av ${cls}" style="background:${COLORS[p]}">${disp(p)[0].toUpperCase()}</span>`; }
+function avatarsFor(members){ return members.length===1 ? avatar(members[0]) : `<span class="avstack">${members.map(m=>avatar(m)).join('')}</span>`; }
+
+/* ============ Resumen ============ */
+function renderResumen(){
+  const {net, paid} = computeBalances();
+  const totalC = DB.expenses.reduce((s,e)=>s+Math.round(toUSD(e.amount,e.cur,e.repayRate||0)*100),0);
+  const totalUSD = totalC/100;
+  document.getElementById('heroCount').textContent = DB.expenses.length;
+  const full = fmt(totalUSD); const [intp, dec] = full.split(',');
+  document.getElementById('heroTotal').innerHTML = `${intp}<span class="cents">,${dec||'00'}</span>`;
+  document.getElementById('heroPP').textContent = fmt(totalUSD/PEOPLE.length);
+  document.getElementById('heroTx').textContent = settle(PEOPLE.map(p=>({key:p,net:net[p]}))).length;
+
+  const act = DB.bsMode;
+  document.getElementById('ratePill').innerHTML =
+    `<div><div class="rt-lbl">Tasas de hoy · activa: ${rateLabel(act)}</div>
+       <div class="rt-val">BCV <span>${nfp(DB.bcvUsd)}</span> · € <span>${nfp(DB.bcvEur)}</span> · Par <span>${nfp(DB.parUsd)}</span></div>
+     </div><div class="rt-go">Actualizar ›</div>`;
+
+  const byCat = {};
+  DB.categories.forEach(c=>byCat[c.id]=0);
+  DB.expenses.forEach(e=> byCat[e.cat]=(byCat[e.cat]||0)+Math.round(toUSD(e.amount,e.cur,e.repayRate||0)*100));
+  const maxC = Math.max(1, ...Object.values(byCat));
+  const cb = document.getElementById('catBreakdown');
+  const rows = Object.keys(byCat).filter(k=>byCat[k]>0).sort((a,b)=>byCat[b]-byCat[a]);
+  if(rows.length===0){
+    cb.innerHTML = `<div style="text-align:center;color:var(--muted);padding:8px 0;font-size:.9rem">Aún no hay gastos. Toca “Agregar gasto”.</div>`;
+  } else {
+    cb.innerHTML = `<div class="catbar">`+rows.map(k=>{
+      const v=byCat[k], pct=Math.round(v/totalC*100);
+      return `<div class="catrow"><span class="emo">${getCat(k).e}</span><div>
+        <div style="display:flex;justify-content:space-between;margin-bottom:5px"><span class="nm">${escapeHtml(getCat(k).label)}</span><span class="pct">${pct}%</span></div>
+        <div class="barwrap"><div class="bar" style="width:${Math.max(4,v/maxC*100)}%"></div></div></div>
+        <span class="amt">${fmt(v/100)}</span></div>`;
+    }).join('')+`</div>`;
+  }
+
+  const pr = document.getElementById('paidRanking');
+  const sorted = PEOPLE.map(p=>({p,v:paid[p]})).filter(x=>x.v>0).sort((a,b)=>b.v-a.v);
+  pr.innerHTML = sorted.length===0
+    ? `<div class="empty" style="padding:26px"><div class="t2">Quien pague primero aparecerá aquí 😎</div></div>`
+    : sorted.map(x=>`<div class="balrow" style="grid-template-columns:auto 1fr auto">${avatar(x.p)}
+        <div><div class="balname">${disp(x.p)}</div><div class="balsub">${coupleOf(x.p)?'Pareja: '+coupleLabel(coupleOf(x.p)):'Viaja solo'}</div></div>
+        <div class="balamt"><div class="n">${fmt(x.v/100)}</div><div class="t" style="color:var(--muted)">pagado</div></div></div>`).join('');
+}
+
+/* ============ Gastos ============ */
+let catFilterVal = 'all';
+function renderCatFilter(){
+  const items = [['all','Todos','']].concat(DB.categories.map(c=>[c.id,c.label,c.e]));
+  document.getElementById('catFilter').innerHTML = items.map(([k,l,e])=>`<button class="fchip ${k===catFilterVal?'on':''}" onclick="setCatFilter('${k}')">${e?e+' ':''}${escapeHtml(l)}</button>`).join('');
+}
+function setCatFilter(k){ catFilterVal=k; renderCatFilter(); renderExpenses(); }
+function renderExpenses(){
+  const q = (document.getElementById('searchIn').value||'').toLowerCase().trim();
+  const list = document.getElementById('expList');
+  let items = [...DB.expenses].reverse();
+  if(catFilterVal!=='all') items = items.filter(e=>e.cat===catFilterVal);
+  if(q) items = items.filter(e=>{
+    const pnames = e.payers ? Object.keys(e.payers).map(disp).join(' ') : disp(e.paidBy||'');
+    return (e.desc+' '+pnames+' '+e.parts.map(disp).join(' ')).toLowerCase().includes(q);
+  });
+  if(items.length===0){
+    list.innerHTML = `<div class="empty"><div class="em">🧾</div>
+      <div class="t1">${DB.expenses.length?'Sin resultados':'Todavía no hay gastos'}</div>
+      <div class="t2">${DB.expenses.length?'Prueba con otra búsqueda o categoría.':'Toca “Agregar gasto” y empieza a registrar todo lo del viaje.'}</div></div>`;
+    return;
+  }
+  list.innerHTML = items.map(e=>{
+    const usd = toUSD(e.amount,e.cur,e.repayRate||0);
+    const who = e.parts.length===PEOPLE.length ? 'todos' : e.parts.length+' personas';
+    const dateStr = e.date ? new Date(e.date+'T00:00').toLocaleDateString('es-VE',{day:'numeric',month:'short'}) : '';
+    const payerNames = e.payers
+      ? Object.keys(e.payers).map(p=>`<b>${disp(p)}</b>${Object.keys(e.payers).length>1?' ('+fmtOrig(parseFloat(e.payers[p])||0,e.cur)+')':''}`).join(' y ')
+      : `<b>${disp(e.paidBy||'?')}</b>`;
+
+    // Línea de repago según moneda
+    let repayLine = '';
+    const rt = e.rateType || (e.cur==='EUR'?'eur': e.cur==='USD_CASH'?'cash':'bcv');
+    if(rt==='cash'){
+      repayLine = `<div class="repay repay-cash">💵 Repago en <b>$ efectivo</b> · ${fmtOrig(e.amount,'USD_CASH')}</div>`;
+    } else if(e.cur==='Bs'){
+      // Bs: el valor de referencia es en $, el repago es a la tasa del día
+      const rr = e.repayRate>0 ? e.repayRate : rateFor(e.cur, rt);
+      const usdEq = rr>0 ? e.amount/rr : 0;
+      const tasaRef = e.rateDate ? (' · ref. '+escapeHtml(e.rateDate)) : '';
+      repayLine = `<div class="repay repay-bs">🇻🇪 Pagado en Bs · <b>Bs ${nfp(e.amount)}</b> · equiv. <b>$${nfp(usdEq)}</b> a ${rateLabel(rt)} ${nfp(rr)}${tasaRef}<br><span style="color:var(--muted)">El repago en Bs se hace a la tasa del día que paguen</span></div>`;
+    } else if(rt==='eur'){
+      const rr = e.repayRate>0 ? e.repayRate : (DB.bcvEur||0);
+      repayLine = `<div class="repay">💱 Repago en Bs: <b>Bs ${nfp(e.amount*rr)}</b> · BCV € ${nfp(rr)} Bs/€${e.rateDate?' · '+escapeHtml(e.rateDate):''}</div>`;
+    } else {
+      const rr = e.repayRate>0 ? e.repayRate : rateFor(e.cur, rt);
+      repayLine = `<div class="repay">💱 Repago en Bs: <b>Bs ${nfp(e.amount*rr)}</b> · ${rateLabel(rt)} ${nfp(rr)} Bs/$${e.rateDate?' · '+escapeHtml(e.rateDate):''}</div>`;
+    }
+
+    // En la columna derecha, si la moneda no es la de visualización mostramos el original
+    const showOrig = (e.cur==='USD_CASH') ? `<div class="orig">💵 ${fmtOrig(e.amount,'USD_CASH')}</div>`
+                   : (e.cur!==DB.displayCur) ? `<div class="orig">${fmtOrig(e.amount,e.cur)}</div>` : '';
+
+    return `<div class="exp"><div class="cat">${getCat(e.cat).e}</div>
+      <div class="info"><div class="d1">${escapeHtml(e.desc)}</div>
+        <div class="d2">Pagó ${payerNames} · entre ${who}${dateStr?' · '+dateStr:''}</div>
+        ${repayLine}</div>
+      <div class="right"><div class="val">${fmt(usd)}</div>
+        ${showOrig}
+        <div class="acts">
+          <button onclick="editExpense('${e.id}')" aria-label="Editar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></svg></button>
+          <button onclick="delExpense('${e.id}')" aria-label="Borrar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6M10 11v6M14 11v6"/></svg></button>
+        </div></div></div>`;
+  }).join('');
+}
+function escapeHtml(s){return (s||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+
+/* ============ Balances ============ */
+let balMode='indiv';
+function setView2(m){ balMode=m;
+  document.getElementById('balIndiv').classList.toggle('on',m==='indiv');
+  document.getElementById('balPareja').classList.toggle('on',m==='pareja');
+  renderBalances();
+}
+function renderBalances(){
+  const {net} = computeBalances();
+  let rows = balMode==='indiv'
+    ? PEOPLE.map(p=>({key:p,kind:'solo',members:[p],label:disp(p),net:net[p]}))
+    : coupleBalances(net);
+  rows.sort((a,b)=>b.net-a.net);
+  const maxAbs = Math.max(1, ...rows.map(r=>Math.abs(r.net)));
+  const el = document.getElementById('balList');
+  if(DB.expenses.length===0){
+    el.innerHTML = `<div class="empty"><div class="em">⚖️</div><div class="t1">Sin movimientos aún</div><div class="t2">Cuando registres gastos verás aquí quién debe y a quién le deben.</div></div>`;
+    return;
+  }
+  el.innerHTML = rows.map(r=>{
+    const v=r.net, w=Math.abs(v)/maxAbs*48;
+    const cls = Math.abs(v)<1?'zero':(v>0?'pos':'neg');
+    const tag = Math.abs(v)<1?'saldado':(v>0?'le deben':'debe');
+    const tc = cls==='pos'?'pos-c':cls==='neg'?'neg-c':'zero-c';
+    const avh = r.members.length>1 ? avatarsFor(r.members) : avatar(r.members[0]);
+    const sub = r.kind==='couple' ? 'Pareja' : (coupleOf(r.members[0])&&balMode==='indiv'?coupleLabel(coupleOf(r.members[0])):(SOLO.includes(r.members[0])?'Viaja solo':''));
+    return `<div class="balrow" style="grid-template-columns:auto 1fr auto;align-items:flex-start">${avh}
+      <div style="min-width:0"><div class="balname">${r.label}</div>${sub?`<div class="balsub">${sub}</div>`:''}
+        <div class="diverge"><div class="axis"></div>
+          ${v>0?`<div class="seg-bar pos" style="width:${w}%"></div>`:''}
+          ${v<0?`<div class="seg-bar neg" style="width:${w}%"></div>`:''}</div></div>
+      <div class="balamt"><div class="n ${tc}">${fmt(v/100)}</div><div class="t ${tc}">${tag}</div></div></div>`;
+  }).join('');
+}
+
+/* ============ Liquidar ============ */
+let setMode='indiv';
+function setView3(m){ setMode=m;
+  document.getElementById('setIndiv').classList.toggle('on',m==='indiv');
+  document.getElementById('setPareja').classList.toggle('on',m==='pareja');
+  renderSettle();
+}
+
+// Genera un ID único para cada transferencia (determinista: siempre el mismo para el mismo par)
+function txKey(fromKey, toKey){ return [fromKey,toKey].sort().join('__')+'__'+setMode; }
+
+function renderSettle(){
+  const {net} = computeBalances();
+  const balances = setMode==='indiv'
+    ? PEOPLE.map(p=>({key:p,label:disp(p),members:[p],net:net[p]}))
+    : coupleBalances(net).map(r=>({key:r.key,label:r.label,members:r.members,net:r.net}));
+  const tx = settle(balances.map(b=>({...b})));
+  const el = document.getElementById('settleList');
+  if(DB.expenses.length===0){
+    el.innerHTML = `<div class="empty"><div class="em">🤝</div><div class="t1">Nada que liquidar todavía</div><div class="t2">Agrega gastos y aquí aparecerá el plan de pagos más corto.</div></div>`;
+    return;
+  }
+  if(tx.length===0){
+    el.innerHTML = `<div class="allset"><div class="em">🌴✅</div><div class="t1">¡Todo saldado!</div><div class="t2">Nadie le debe nada a nadie. Disfruten Margarita.</div></div>`;
+    return;
+  }
+  const settled = DB.settled||{};
+  const alerts  = DB.alerts||{};
+  const me = ME;
+
+  const head = `<div class="settle-head">
+      <div class="top"><div class="big">${tx.length}</div><div class="lbl">${tx.length===1?'transferencia':'transferencias'} para quedar a mano</div></div>
+      <div class="rate">Mostrando en ${DB.displayCur==='Bs'?('Bs · tasa '+rateLabel(DB.bsMode)):DB.displayCur} · BCV ${nfp(DB.bcvUsd)} · € ${nfp(DB.bcvEur)} · Par ${nfp(DB.parUsd)}</div>
+    </div>`;
+
+  el.innerHTML = head + tx.map(t=>{
+    const key = txKey(t.from.key, t.to.key);
+    const isSettled = !!settled[key];
+    const hasAlert  = !!alerts[key];
+    const amPayer   = me && t.from.members.includes(me);
+    const amPayee   = me && t.to.members.includes(me);
+    const fromAv = avatarsFor(t.from.members), toAv = avatarsFor(t.to.members);
+    const bs = DB.displayCur!=='Bs' ? `<small>${fmt(t.amount/100,{cur:'Bs'})}</small>` : '';
+
+    let metaHtml = '';
+    if(isSettled){
+      const sd = settled[key];
+      metaHtml = `<div class="tx-settled">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M20 6 9 17l-5-5"/></svg>
+        Pagado${sd.by?' · confirmado por '+disp(sd.by):''}${sd.at?' el '+new Date(sd.at).toLocaleDateString('es-VE',{day:'numeric',month:'short'}):''}
+      </div>
+      ${amPayee?`<button class="btn-unsettled" onclick="unsettle('${key}')">Desmarcar</button>`:''}`;
+    } else {
+      if(hasAlert){
+        metaHtml += `<div class="tx-alert"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M13 16h-1v-4h-1m1-4h.01M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10 10-4.5 10-10S17.5 2 12 2z"/></svg>${disp(t.from.label)} avisó que pagó</div>`;
+      }
+      if(amPayee){
+        // cobrador: puede confirmar el pago
+        metaHtml += `<button class="btn-settle" onclick="markSettled('${key}')">✓ Confirmar recibido</button>`;
+        if(hasAlert) metaHtml += `<button class="notif-dismiss" style="padding:8px 12px;border-radius:10px;font-size:.8rem;font-weight:700" onclick="dismissAlert('${key}')">Ignorar aviso</button>`;
+      } else if(amPayer){
+        // pagador: puede avisar que ya pagó
+        metaHtml += hasAlert
+          ? `<span class="tx-pending">Aviso enviado · esperando confirmación del cobrador</span>`
+          : `<button class="btn-alert" onclick="sendAlert('${key}')">📨 Avisar que pagué</button>`;
+      } else {
+        metaHtml += `<span class="tx-pending">Pendiente</span>`;
+      }
+    }
+
+    return `<div class="tx-card" style="${isSettled?'opacity:.55':''}">
+      <div class="tx-main">
+        <div class="arrow">${fromAv}<span class="who">${t.from.label}</span>
+          <span class="arr"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span>
+          ${toAv}<span class="who">${t.to.label}</span></div>
+        <div class="pay">${fmt(t.amount/100)}${bs}</div>
+      </div>
+      <div class="tx-meta">${metaHtml}</div>
+    </div>`;
+  }).join('');
+}
+
+function markSettled(key){
+  if(!DB.settled) DB.settled={};
+  DB.settled[key]={by:ME, at:new Date().toISOString()};
+  // limpiar alerta si la había
+  if(DB.alerts && DB.alerts[key]) delete DB.alerts[key];
+  save(); renderSettle(); renderResumen(); toast('✓ Pago confirmado');
+}
+function unsettle(key){
+  if(DB.settled && DB.settled[key]) delete DB.settled[key];
+  save(); renderSettle(); renderResumen(); toast('Pago desmarcado');
+}
+function sendAlert(key){
+  if(!DB.alerts) DB.alerts={};
+  DB.alerts[key]={from:ME, at:new Date().toISOString()};
+  save(); renderSettle(); toast('📨 Aviso enviado al cobrador');
+}
+function dismissAlert(key){
+  if(DB.alerts && DB.alerts[key]) delete DB.alerts[key];
+  save(); renderSettle(); toast('Aviso descartado');
+}
+
+/* ============ Formulario de gasto ============ */
+let editingId = null;
+let form = {cur:'USD', cat:'', payers:{Angela:''}, mode:'equal', parts:new Set(PEOPLE), exact:{}, rateType:'bcv'};
+
+function buildCatPick(){
+  let html = '';
+  if(DB.categories.length===0) html += `<div class="emptyhint">Aún no tienes categorías. Crea la primera 👇 (es opcional).</div>`;
+  html += DB.categories.map(c=>`<button type="button" data-cat="${c.id}" onclick="setCat('${c.id}')"><span class="e">${c.e}</span>${escapeHtml(c.label)}</button>`).join('');
+  html += `<button type="button" class="addcat" onclick="openCatModal()"><span class="e">＋</span>Nueva</button>`;
+  document.getElementById('catPick').innerHTML = html;
+  applyCatHighlight();
+}
+function applyCatHighlight(){ document.querySelectorAll('#catPick button[data-cat]').forEach(b=>b.classList.toggle('on', b.getAttribute('data-cat')===form.cat)); }
+function setCat(k){ form.cat=k; applyCatHighlight(); }
+
+function buildPayerPick(){
+  const groups = COUPLES.map(c=>({title:coupleLabel(c),members:c.members})).concat([{title:'Sin pareja',members:SOLO}]);
+  document.getElementById('payerPick').innerHTML = groups.map(g=>
+    `<div class="coupleblock"><div class="ctitle">${g.title}</div><div class="partgrid">`+
+    g.members.map(p=>{
+      const on = p in form.payers;
+      const val = on ? form.payers[p] : '';
+      return `<div class="part ${on?'on':''}" id="pyr_${p}" onclick="togglePayer(event,'${p}')">
+        ${avatar(p)}<span>${disp(p)}</span>
+        <input class="exact" type="number" inputmode="decimal" step="0.01" min="0" placeholder="0.00"
+          value="${val}" oninput="onPayerInput('${p}',this.value)"
+          ${on?'':'disabled style=opacity:.4'}>
+      </div>`;
+    }).join('')+`</div></div>`
+  ).join('');
+  updatePayerNote();
+}
+function togglePayer(ev, p){
+  if(ev.target.classList.contains('exact')) return;
+  if(p in form.payers){ delete form.payers[p]; }
+  else { form.payers[p] = ''; }
+  buildPayerPick(); validateForm();
+}
+function onPayerInput(p,v){ form.payers[p]=v; updatePayerNote(); validateForm(); }
+function payerSplitEqual(){
+  const ps = Object.keys(form.payers); if(!ps.length) return;
+  const amt = parseFloat(document.getElementById('fAmount').value)||0;
+  if(!amt){ toast('Pon el monto total primero'); return; }
+  const cents=Math.round(amt*100); const base=Math.floor(cents/ps.length); let rem=cents-base*ps.length;
+  ps.forEach(p=>{ const c=base+(rem>0?1:0); if(rem>0)rem--; form.payers[p]=(c/100).toFixed(2); });
+  buildPayerPick(); validateForm();
+}
+function payerSum(){ return Object.values(form.payers).reduce((s,v)=>s+(parseFloat(v)||0),0); }
+function updatePayerNote(){
+  const note=document.getElementById('payerNote'); if(!note) return;
+  const ps=Object.keys(form.payers); const amt=parseFloat(document.getElementById('fAmount').value)||0;
+  if(!ps.length){ note.innerHTML='<span class="warn">Elige al menos a una persona que pagó.</span>'; return; }
+  const sum=payerSum();
+  if(ps.length===1){
+    note.innerHTML=`<span>${disp(ps[0])} pagó todo${sum>0?' ('+fmtOrig(sum,form.cur)+')':''}</span>`;
+    return;
+  }
+  const diff=+(amt-sum).toFixed(2);
+  if(amt>0 && Math.abs(diff)>=0.01){
+    note.innerHTML=`<span class="warn">${diff>0?'Falta':'Sobra'} ${fmtOrig(Math.abs(diff),form.cur)} para completar el total.</span>
+      <button onclick="payerSplitEqual()">Repartir igual</button>`;
+  } else if(ps.length===1){
+    note.innerHTML=`<span>${disp(ps[0])} pagó todo</span>`;
+  } else {
+    note.innerHTML=`<span class="ok">✓ ${ps.length} personas · cuadra (${fmtOrig(sum,form.cur)})</span>`;
+  }
+}
+
+function buildPartList(){
+  const groups = COUPLES.map(c=>({title:coupleLabel(c), members:c.members})).concat([{title:'Sin pareja', members:SOLO}]);
+  document.getElementById('partList').innerHTML = groups.map(g=>`<div class="coupleblock"><div class="ctitle">${g.title}</div><div class="partgrid">${g.members.map(p=>partChip(p)).join('')}</div></div>`).join('');
+}
+function partChip(p){
+  const on = form.parts.has(p);
+  const exactInput = form.mode==='exact'
+    ? `<input class="exact" type="number" inputmode="decimal" step="0.01" min="0" placeholder="0.00" value="${form.exact[p]!==undefined?form.exact[p]:''}" oninput="onExactInput('${p}',this.value)" ${on?'':'disabled style=opacity:.4'}>`
+    : `<span class="check"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M5 13l4 4L19 7"/></svg></span>`;
+  return `<div class="part ${on?'on':''}" id="part_${p}" onclick="${form.mode==='exact'?`togglePartExact(event,'${p}')`:`togglePart('${p}')`}">${avatar(p)}<span>${disp(p)}</span>${exactInput}</div>`;
+}
+function togglePart(p){
+  if(form.parts.has(p)) form.parts.delete(p); else form.parts.add(p);
+  document.getElementById('part_'+p).classList.toggle('on', form.parts.has(p));
+  updateSplitNote(); validateForm();
+}
+function togglePartExact(ev,p){ if(ev.target.classList.contains('exact')) return; togglePart(p); buildPartList(); }
+function onExactInput(p,v){ form.exact[p]=v; updateSplitNote(); validateForm(); }
+function selectAllParts(){ PEOPLE.forEach(p=>form.parts.add(p)); buildPartList(); updateSplitNote(); validateForm(); }
+function clearParts(){ form.parts.clear(); buildPartList(); updateSplitNote(); validateForm(); }
+function setSplitMode(m){
+  form.mode=m;
+  document.getElementById('smEqual').classList.toggle('on',m==='equal');
+  document.getElementById('smExact').classList.toggle('on',m==='exact');
+  buildPartList(); updateSplitNote(); validateForm();
+}
+function onAmountChange(){ updateSplitNote(); updatePayerNote(); renderRateType(); validateForm(); }
+function exactSumUSD(){ let s=0; form.parts.forEach(p=> s+=parseFloat(form.exact[p])||0); return s; }
+function updateSplitNote(){
+  const note = document.getElementById('splitNote');
+  const amt = parseFloat(document.getElementById('fAmount').value)||0;
+  const n = form.parts.size;
+  if(form.mode==='equal'){
+    if(n===0){ note.innerHTML=`<span class="warn">Elige al menos a una persona.</span>`; return; }
+    note.innerHTML = `<span>${n} ${n===1?'persona':'personas'} · ${fmtOrig(amt/n,form.cur)} c/u</span>`;
+  } else {
+    const sum = exactSumUSD(); const diff = +(amt - sum).toFixed(2);
+    if(Math.abs(diff)<0.01 && n>0){ note.innerHTML = `<span class="ok">✓ Cuadra exacto (${fmtOrig(sum,form.cur)})</span>`; }
+    else { note.innerHTML = `<span class="warn">${diff>0?'Falta':'Sobra'} ${fmtOrig(Math.abs(diff),form.cur)} de ${fmtOrig(amt,form.cur)}</span><button onclick="splitRemainder()">Repartir resto</button>`; }
+  }
+}
+function splitRemainder(){
+  const amt = parseFloat(document.getElementById('fAmount').value)||0;
+  const parts=[...form.parts]; if(parts.length===0) return;
+  const cents=Math.round(amt*100); const base=Math.floor(cents/parts.length); let rem=cents-base*parts.length;
+  parts.forEach(p=>{ const c=base+(rem>0?1:0); if(rem>0)rem--; form.exact[p]=(c/100).toFixed(2); });
+  buildPartList(); updateSplitNote(); validateForm();
+}
+function setFormCur(c){
+  form.cur=c;
+  ['USD','USD_CASH','EUR','Bs'].forEach(x=>{
+    const b=document.getElementById('fc'+x); if(b) b.classList.toggle('on', x===c);
+  });
+  const hints = {
+    USD:      '💳 Dólar digital / transferencia. Elige la tasa de referencia para el repago en Bs.',
+    USD_CASH: '💵 Dólares físicos en efectivo. El repago debe ser <b>en $ cash</b>, sin conversión a Bs.',
+    EUR:      '€ Euro. El repago en Bs usa la tasa euro oficial del BCV.',
+    Bs:       '🇻🇪 Bolívares. Elige la tasa de referencia: el valor en $ queda fijo y quien repague convierte a la tasa del día que le toque pagar.',
+  };
+  const hEl = document.getElementById('curHint');
+  if(hEl) hEl.innerHTML = hints[c]||'';
+  renderRateType(); updateSplitNote(); updatePayerNote();
+}
+function setRateType(m){ form.rateType=m; renderRateType(); }
+function renderRateType(){
+  const fl=document.getElementById('rateTypeFl'); if(!fl) return;
+  const note=document.getElementById('rateTypeNote');
+  const amt=parseFloat(document.getElementById('fAmount').value)||0;
+  const cur=form.cur;
+  // Solo $ cash no tiene selector de tasa
+  if(cur==='USD_CASH'){
+    fl.style.display='none'; return;
+  }
+  fl.style.display='';
+  if(cur==='EUR'){
+    document.getElementById('rt_bcv').classList.add('on');
+    document.getElementById('rt_par').classList.remove('on');
+    document.getElementById('rateTypePick').style.cssText='opacity:.45;pointer-events:none';
+    const bs=amt*(DB.bcvEur||0);
+    note.innerHTML=`<span>Tasa BCV € · ${nfp(DB.bcvEur)} Bs/€${amt>0?` · equivale a <b>$${nfp(amt/DB.rate)}</b> · repago Bs ${nfp(bs)} a tasa del día`:''}</span>`;
+  } else {
+    // USD digital y Bs: mismo selector BCV / USDT-Par
+    document.getElementById('rateTypePick').style.cssText='';
+    const m=(form.rateType==='par')?'par':'bcv';
+    document.getElementById('rt_bcv').classList.toggle('on',m==='bcv');
+    document.getElementById('rt_par').classList.toggle('on',m==='par');
+    const r=m==='par'?(DB.parUsd||DB.bcvUsd):(DB.bcvUsd||0);
+    if(cur==='Bs'){
+      const usdEq = r>0 ? amt/r : 0;
+      note.innerHTML=`<span>Tasa ref. ${rateLabel(m)} · ${nfp(r)} Bs/$ · ${amt>0?`equivale a <b>$${nfp(usdEq)}</b> · repaga en Bs a la tasa del día que paguen`:'el valor en $ queda fijo'}</span>`;
+    } else {
+      const bs=amt*r;
+      note.innerHTML=`<span>Tasa ref. ${rateLabel(m)} · ${nfp(r)} Bs/$${amt>0?` · repago Bs <b>${nfp(bs)}</b> a tasa de hoy`:''}</span>`;
+    }
+  }
+}
+function validateForm(){
+  const desc = document.getElementById('fDesc').value.trim();
+  const amt = parseFloat(document.getElementById('fAmount').value)||0;
+  const ps = Object.keys(form.payers);
+  const psum = payerSum();
+  let ok = desc.length>0 && amt>0 && form.parts.size>0 && ps.length>0;
+  // los pagadores deben sumar al total (o si hay uno solo, no es obligatorio poner monto)
+  if(ok && ps.length>1) ok = Math.abs(amt-psum)<0.01;
+  if(form.mode==='exact') ok = ok && Math.abs(amt - exactSumUSD())<0.01;
+  document.getElementById('saveBtn').disabled = !ok;
+}
+function openForm(){
+  editingId=null;
+  document.getElementById('formTitle').textContent='Nuevo gasto';
+  document.getElementById('fDesc').value='';
+  document.getElementById('fAmount').value='';
+  document.getElementById('fDate').value = new Date().toISOString().slice(0,10);
+  form = {cur:DB.defaultCur||'USD', cat:firstCatId(), payers:{Angela:''}, mode:'equal', parts:new Set(PEOPLE), exact:{}, rateType:DB.bsMode};
+  setFormCur(form.cur); buildPayerPick(); setSplitMode('equal');
+  showScrim();
+}
+function editExpense(id){
+  const e = DB.expenses.find(x=>x.id===id); if(!e) return;
+  editingId=id;
+  document.getElementById('formTitle').textContent='Editar gasto';
+  document.getElementById('fDesc').value=e.desc;
+  document.getElementById('fAmount').value=e.amount;
+  document.getElementById('fDate').value=e.date||new Date().toISOString().slice(0,10);
+  const ec = catMap()[e.cat] ? e.cat : firstCatId();
+  let payers = e.payers && typeof e.payers==='object' ? Object.assign({},e.payers) : {[e.paidBy||'Angela']:''};
+  let rt = e.rateType||'bcv';
+  // migración: rt='bs' de versión anterior → 'bcv'
+  if(!['bcv','par','eur','cash'].includes(rt)) rt='bcv';
+  form = {cur:e.cur||'USD', cat:ec, payers, mode:e.mode, parts:new Set(e.parts), exact:Object.assign({},e.exact), rateType:rt};
+  setFormCur(e.cur); buildPayerPick(); setSplitMode(e.mode);
+  showScrim();
+}
+function showScrim(){
+  buildCatPick(); setCat(form.cat);
+  document.getElementById('scrim').classList.add('on');
+  document.body.style.overflow='hidden';
+  updateSplitNote(); validateForm();
+}
+function closeForm(){ document.getElementById('scrim').classList.remove('on'); document.body.style.overflow=''; }
+function saveExpense(){
+  const desc=document.getElementById('fDesc').value.trim();
+  const amount=parseFloat(document.getElementById('fAmount').value)||0;
+  const date=document.getElementById('fDate').value;
+  const parts=[...form.parts];
+  const exact={}; if(form.mode==='exact') parts.forEach(p=>exact[p]=parseFloat(form.exact[p])||0);
+  let rt;
+  if(form.cur==='EUR')          rt='eur';
+  else if(form.cur==='USD_CASH')rt='cash';
+  else rt=(form.rateType==='par'?'par':'bcv');  // USD digital y Bs usan mismo selector
+  const repayRate = rateFor(form.cur, rt);
+  const payers = Object.assign({},form.payers);
+  const ps = Object.keys(payers);
+  if(ps.length===1 && !(parseFloat(payers[ps[0]])>0)) payers[ps[0]] = amount;
+  else ps.forEach(p=>{ payers[p]=parseFloat(payers[p])||0; });
+  if(editingId){
+    Object.assign(DB.expenses.find(x=>x.id===editingId),{desc,amount,cur:form.cur,cat:form.cat,payers,mode:form.mode,parts,exact,date,
+      rateType:rt, repayRate, rateDate:(DB.ratesDate||'')});
+    toast('Gasto actualizado');
+  } else {
+    DB.expenses.push(mk(desc,form.cat,amount,form.cur,payers,parts,form.mode,exact,date,rt));
+    toast('Gasto agregado ✓');
+  }
+  save(); closeForm(); renderAll();
+}
+function delExpense(id){
+  const e=DB.expenses.find(x=>x.id===id);
+  if(!confirm('¿Borrar "'+(e?e.desc:'este gasto')+'"?')) return;
+  DB.expenses=DB.expenses.filter(x=>x.id!==id);
+  save(); renderAll(); toast('Gasto eliminado');
+}
+
+/* ============ Categorías personalizables ============ */
+let editingCatId = null;
+const EMOJI_SUGGEST = ['🍽️','🍻','🍹','☕','🍦','🥥','🏖️','🏝️','⛱️','🚤','🛥️','🚕','✈️','⛽','🅿️','🤿','🏄','🎣','🎟️','🎉','🎁','🛒','🛍️','💊','🧴','🏥','📶','🧳','💸','🏷️','✨'];
+function renderEmojiPal(){ document.getElementById('emojiPal').innerHTML = EMOJI_SUGGEST.map(e=>`<button type="button" onclick="pickEmoji('${e}')">${e}</button>`).join(''); }
+function pickEmoji(e){ document.getElementById('catEmoji').value=e; validateCat(); }
+function openCatModal(id){
+  editingCatId = id || null;
+  renderEmojiPal();
+  const c = id ? catMap()[id] : null;
+  document.getElementById('catTitle').textContent = c ? 'Editar categoría' : 'Nueva categoría';
+  document.getElementById('catEmoji').value = c ? c.e : '';
+  document.getElementById('catName').value  = c ? c.label : '';
+  document.getElementById('catScrim').classList.add('on');
+  document.body.style.overflow='hidden';
+  validateCat();
+}
+function closeCatModal(){
+  document.getElementById('catScrim').classList.remove('on');
+  if(!document.getElementById('scrim').classList.contains('on')) document.body.style.overflow='';
+}
+function validateCat(){
+  const name = document.getElementById('catName').value.trim();
+  const emo  = document.getElementById('catEmoji').value.trim();
+  document.getElementById('catSaveBtn').disabled = !(name && emo);
+}
+function saveCat(){
+  const name = document.getElementById('catName').value.trim();
+  const emo  = document.getElementById('catEmoji').value.trim() || '🏷️';
+  if(!name) return;
+  const formOpen = document.getElementById('scrim').classList.contains('on');
+  if(editingCatId){ const c=catMap()[editingCatId]; if(c){c.label=name;c.e=emo;} toast('Categoría actualizada'); }
+  else { const id=newCatId(); DB.categories.push({id,label:name,e:emo}); if(formOpen) form.cat=id; toast('Categoría agregada ✓'); }
+  save(); closeCatModal();
+  renderCatManager(); buildCatPick(); if(formOpen) setCat(form.cat);
+  renderAll();
+}
+function deleteCat(id){
+  const c = catMap()[id];
+  const inUse = DB.expenses.filter(e=>e.cat===id).length;
+  const fallback = DB.categories.find(x=>x.id!==id);
+  let msg = `¿Borrar la categoría "${c?c.label:''}"?`;
+  if(inUse) msg += fallback ? `\n\n${inUse} ${inUse===1?'gasto pasará':'gastos pasarán'} a "${fallback.label}".`
+                            : `\n\n${inUse} ${inUse===1?'gasto quedará':'gastos quedarán'} sin categoría.`;
+  if(!confirm(msg)) return;
+  if(inUse) DB.expenses.forEach(e=>{ if(e.cat===id) e.cat = fallback ? fallback.id : ''; });
+  DB.categories = DB.categories.filter(x=>x.id!==id);
+  if(catFilterVal===id) catFilterVal='all';
+  save(); renderCatManager(); buildCatPick(); renderAll(); toast('Categoría eliminada');
+}
+function renderCatManager(){
+  const el = document.getElementById('catManager'); if(!el) return;
+  if(DB.categories.length===0){
+    el.innerHTML = `<div class="empty" style="padding:30px 20px"><div class="em">🏷️</div><div class="t1">Sin categorías</div><div class="t2">Crea las que usen en el viaje (Comida, Posada, Lancha, Bebidas…).</div></div>`;
+    return;
+  }
+  el.innerHTML = DB.categories.map(c=>{
+    const n = DB.expenses.filter(e=>e.cat===c.id).length;
+    return `<div class="catmrow"><span class="catmemo">${c.e}</span>
+      <div class="catminfo"><div class="catmname">${escapeHtml(c.label)}</div><div class="catmsub">${n} ${n===1?'gasto':'gastos'}</div></div>
+      <div class="catmacts">
+        <button onclick="openCatModal('${c.id}')" aria-label="Editar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></svg></button>
+        <button onclick="deleteCat('${c.id}')" aria-label="Borrar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6M10 11v6M14 11v6"/></svg></button>
+      </div></div>`;
+  }).join('');
+}
+
+/* ============ Tasas (Monitor de Divisas) ============ */
+function parseNum(s){
+  if(s==null) return null;
+  s = (''+s).replace(/[^\d.,]/g,'');
+  if(!s) return null;
+  const ld=s.lastIndexOf('.'), lc=s.lastIndexOf(',');
+  if(lc>ld)      s = s.replace(/\./g,'').replace(',', '.');  // ',' decimal (formato VE)
+  else if(ld>lc) s = s.replace(/,/g,'');                     // '.' decimal
+  else           s = s.replace(/[.,]/g,'');                  // sin decimal
+  const n = parseFloat(s);
+  return (isFinite(n) && n>0) ? n : null;
+}
+/* ============ Tasas — API dolarvzla.com (CORS libre, sin proxy) ============ */
+function todayKey(){ return new Date().toISOString().slice(0,10); }  // "2026-07-10"
+
+// Guarda o actualiza una entrada en el histórico (una por fecha)
+function pushToHistory(entry){
+  if(!DB.rateHistory) DB.rateHistory=[];
+  const idx = DB.rateHistory.findIndex(r=>r.date===entry.date);
+  if(idx>=0) DB.rateHistory[idx]=entry;
+  else DB.rateHistory.push(entry);
+  // mantener ordenado DESC y máx 90 días
+  DB.rateHistory.sort((a,b)=>b.date.localeCompare(a.date));
+  if(DB.rateHistory.length>90) DB.rateHistory=DB.rateHistory.slice(0,90);
+}
+
+// Tasa BCV de un día específico (para gastos pasados)
+async function fetchBcvForDate(dateStr){
+  // dateStr = "YYYY-MM-DD"
+  const [y,m,d] = dateStr.split('-').map(Number);
+  const url = `https://rates.dolarvzla.com/bcv/${y}/${m}/${d}.json`;
+  const res = await fetch(url, {cache:'force-cache'});
+  if(!res.ok) throw new Error('no data for '+dateStr);
+  return res.json();   // {date, usd, eur}
+}
+
+async function fetchRates(){
+  // Lanzamos las dos APIs en paralelo para ir más rápido
+  const [bcvResult, dolarapiResult] = await Promise.allSettled([
+    // API 1: dolarvzla CDN — fuente directa BCV, CORS libre, sin proxy
+    fetch('https://rates.dolarvzla.com/bcv/current.json', {cache:'no-store'})
+      .then(r=>{ if(!r.ok) throw new Error('dolarvzla '+r.status); return r.json(); }),
+    // API 2: dolarapi.com — BCV + paralelo + euro, CORS libre, sin proxy
+    fetch('https://ve.dolarapi.com/v1/dolares', {cache:'no-store'})
+      .then(r=>{ if(!r.ok) throw new Error('dolarapi '+r.status); return r.json(); }),
+  ]);
+
+  // --- BCV USD y EUR: dolarvzla es la fuente más precisa ---
+  let bcvUsd = null, bcvEur = null, bcvDate = todayKey();
+  if(bcvResult.status==='fulfilled'){
+    const d = bcvResult.value;
+    bcvUsd  = d.current?.usd ?? d.usd ?? null;
+    bcvEur  = d.current?.eur ?? d.eur ?? null;
+    bcvDate = d.current?.date ?? d.date ?? todayKey();
+  }
+
+  // --- Paralelo/USDT y fallbacks: dolarapi.com ---
+  let parUsd = DB.parUsd;   // conservar el manual si falla todo
+  if(dolarapiResult.status==='fulfilled'){
+    const arr = dolarapiResult.value;   // array de objetos [{fuente, nombre, promedio, ...}]
+    if(Array.isArray(arr)){
+      const find = (...names) => {
+        for(const n of names){
+          const item = arr.find(x=> (x.fuente||x.nombre||'').toLowerCase().includes(n));
+          if(item && item.promedio>0) return item.promedio;
+        }
+        return null;
+      };
+      // Paralelo / USDT (binance p2p o paralelo)
+      const par = find('paralelo','usdt','binance','cripto');
+      if(par) parUsd = par;
+      // BCV como fallback si dolarvzla falló
+      if(!(bcvUsd>0)){
+        const ofic = find('oficial','bcv');
+        if(ofic) bcvUsd = ofic;
+      }
+      if(!(bcvEur>0)){
+        const eur = arr.find(x=> (x.moneda||x.fuente||x.nombre||'').toLowerCase().includes('eur'));
+        if(eur && eur.promedio>0) bcvEur = eur.promedio;
+      }
+    }
+  }
+
+  if(!(bcvUsd>0)) throw new Error('No se pudo obtener la tasa BCV. Verifica internet.');
+  return {bcvUsd, bcvEur: bcvEur||DB.bcvEur, parUsd, bcvDate};
+}
+
+async function updateFromBCV(){
+  const btn=document.getElementById('bcvBtn'); const old=btn.innerHTML;
+  btn.disabled=true; btn.innerHTML='⏳ Consultando BCV…';
+  try{
+    const {bcvUsd, bcvEur, parUsd, bcvDate} = await fetchRates();
+    DB.bcvUsd=bcvUsd; DB.bcvEur=bcvEur; DB.parUsd=parUsd;
+    DB.ratesDate=bcvDate;
+    DB.ratesUpdated=new Date().toISOString();
+    // guardar en histórico
+    pushToHistory({date:bcvDate, bcvUsd, bcvEur, parUsd});
+    recalcRate(); save(); syncSettings(); renderRateHistory(); renderAll();
+    const parMsg = parUsd!==DB.parUsd ? ` · USDT Bs ${nfp(parUsd)}` : ' · USDT sin cambio';
+    toast(`✓ BCV Bs ${nfp(bcvUsd)} · € Bs ${nfp(DB.bcvEur)}${parMsg}`);
+  }catch(e){
+    toast('No se pudo obtener la tasa. Verifica internet o ajústala a mano.');
+    console.error('fetchRates error:', e);
+  }finally{
+    btn.disabled=false; btn.innerHTML=old;
+  }
+}
+
+/* ============ Render histórico de tasas ============ */
+function renderRateHistory(){
+  const el=document.getElementById('rateHistoryList'); if(!el) return;
+  const hist = (DB.rateHistory||[]).slice(0,30);
+  if(hist.length===0){
+    el.innerHTML=`<div class="empty" style="padding:22px 16px"><div class="t2">Aún no hay tasas guardadas. Toca "Actualizar" para registrar la de hoy.</div></div>`;
+    return;
+  }
+  el.innerHTML = hist.map(r=>{
+    const dateLabel = new Date(r.date+'T00:00').toLocaleDateString('es-VE',{weekday:'short',day:'numeric',month:'short'});
+    return `<div class="ratehrow">
+      <div class="ratehdate">${dateLabel}</div>
+      <div class="ratehvals">
+        <span class="ratechip bcvchip">BCV $${nfp(r.bcvUsd)}</span>
+        <span class="ratechip earchip">€ ${nfp(r.bcvEur)}</span>
+        ${r.parUsd>0?`<span class="ratechip parchip">Par $${nfp(r.parUsd)}</span>`:''}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+/* ============ Ajustes ============ */
+function saveTodayRate(){
+  pushToHistory({date:todayKey(), bcvUsd:DB.bcvUsd, bcvEur:DB.bcvEur, parUsd:DB.parUsd});
+  DB.ratesDate=todayKey(); DB.ratesUpdated=new Date().toISOString();
+}
+function setBcvUsd(v){ const r=parseFloat(v); if(r>0){ DB.bcvUsd=r; recalcRate(); saveTodayRate(); save(); syncSettings(); renderRateHistory(); renderAll(); toast('Tasa BCV $ guardada'); } }
+function setBcvEur(v){ const r=parseFloat(v); if(r>0){ DB.bcvEur=r; recalcRate(); saveTodayRate(); save(); syncSettings(); renderRateHistory(); renderAll(); toast('Tasa € guardada'); } }
+function setParUsd(v){ const r=parseFloat(v); if(r>0){ DB.parUsd=r; saveTodayRate(); save(); syncSettings(); renderRateHistory(); renderAll(); toast('Tasa paralelo guardada'); } }
+function setBsMode(m){ DB.bsMode=m; save(); syncSettings(); renderAll(); }
+function setDisplayCur(c){ DB.displayCur=c; save(); setDisplayCurUI(c); renderAll(); }
+function setDisplayCurUI(c){
+  ['USD','EUR','Bs'].forEach(x=>{ const b=document.getElementById('cur'+x); if(b) b.classList.toggle('on', x===c); });
+}
+function setDefaultCur(c){
+  DB.defaultCur=c; save();
+  ['USD','USD_CASH','EUR','Bs'].forEach(x=>{
+    const b=document.getElementById('def'+x); if(b) b.classList.toggle('on', x===c);
+  });
+}
+function exportData(){
+  const blob=new Blob([JSON.stringify(DB,null,2)],{type:'application/json'});
+  const url=URL.createObjectURL(blob); const a=document.createElement('a');
+  a.href=url; a.download='cuentas-margarita.json'; a.click(); URL.revokeObjectURL(url);
+  toast('Archivo exportado');
+}
+function importData(ev){
+  const f=ev.target.files[0]; if(!f) return;
+  const r=new FileReader();
+  r.onload=()=>{ try{
+    const d=JSON.parse(r.result);
+    if(!Array.isArray(d.expenses)) throw 0;
+    DB=Object.assign({expenses:[],categories:[],rate:1.08,bcvUsd:592.52,bcvEur:687.70,parUsd:789.67,bsMode:'bcv',ratesDate:'',ratesUpdated:'',displayCur:'USD',defaultCur:'USD'},d);
+    if(!Array.isArray(DB.categories)) DB.categories=[];
+    if(!(DB.bcvUsd>0)) DB.bcvUsd=592.52;
+    if(!(DB.bcvEur>0)) DB.bcvEur=687.70;
+    if(!(DB.parUsd>0)) DB.parUsd=789.67;
+    if(DB.bsMode!=='par'&&DB.bsMode!=='bcv') DB.bsMode='bcv';
+    recalcRate(); save(); syncSettings(); renderCatManager(); renderAll(); toast('Datos importados ✓');
+  }catch(e){ toast('Archivo no válido'); } };
+  r.readAsText(f); ev.target.value='';
+}
+function wipeAll(){ if(!confirm('Esto borrará TODOS los gastos. ¿Seguro?')) return; DB.expenses=[]; save(); renderAll(); toast('Todo borrado'); }
+
+/* ============ Navegación / utilidades ============ */
+function go(v){
+  document.querySelectorAll('.view').forEach(s=>s.classList.remove('on'));
+  document.getElementById('v-'+v).classList.add('on');
+  document.querySelectorAll('.tab').forEach(t=>t.classList.toggle('on',t.dataset.v===v));
+  window.scrollTo({top:0,behavior:'smooth'});
+  document.getElementById('fab').style.display = (v==='ajustes')?'none':'flex';
+}
+let toastT;
+function toast(msg){ const t=document.getElementById('toast'); t.textContent=msg; t.classList.add('on'); clearTimeout(toastT); toastT=setTimeout(()=>t.classList.remove('on'),2200); }
+function renderPeopleRef(){
+  const order = COUPLES.flatMap(c=>c.members).concat(SOLO);
+  document.getElementById('peopleRef').innerHTML = order.map(p=>`<span class="ptag">${avatar(p)}${disp(p)}</span>`).join('');
+}
+function syncSettings(){
+  const bu=document.getElementById('bcvUsdIn'); if(bu) bu.value = DB.bcvUsd;
+  const be=document.getElementById('bcvEurIn'); if(be) be.value = DB.bcvEur;
+  const bp=document.getElementById('parUsdIn'); if(bp) bp.value = DB.parUsd;
+  const dr=document.getElementById('derivedRate'); if(dr) dr.textContent = `Cambio €↔$ (BCV): 1 € = $${nfp(DB.rate)} · 1 $ = €${nfp(1/DB.rate)}`;
+  ['bcv','par'].forEach(m=>{ const b=document.getElementById('mode_'+m); if(b) b.classList.toggle('on', DB.bsMode===m); });
+  const st=document.getElementById('bcvStatus');
+  if(st){
+    if(DB.ratesDate && DB.ratesUpdated){
+      const dt=new Date(DB.ratesUpdated);
+      st.textContent = `Tasa BCV del ${DB.ratesDate} · consultada ${isNaN(dt)?'':dt.toLocaleTimeString('es-VE',{hour:'2-digit',minute:'2-digit'})}`;
+    } else if(DB.ratesUpdated){
+      const dt=new Date(DB.ratesUpdated);
+      st.textContent = 'Actualizado ' + (isNaN(dt)?'' : dt.toLocaleDateString('es-VE',{day:'numeric',month:'short'})+' '+dt.toLocaleTimeString('es-VE',{hour:'2-digit',minute:'2-digit'}));
+    } else {
+      st.textContent = 'Toca «Actualizar» para traer la tasa oficial BCV de hoy.';
+    }
+  }
+  setDisplayCurUI(DB.displayCur);
+  ['USD','USD_CASH','EUR','Bs'].forEach(x=>{
+    const b=document.getElementById('def'+x); if(b) b.classList.toggle('on', x===(DB.defaultCur||'USD'));
+  });
+}
+/* ============ Identidad del usuario (local, no en Firebase) ============ */
+let ME = localStorage.getItem('margarita_me') || '';
+
+function setMe(p){
+  ME = p;
+  localStorage.setItem('margarita_me', p);
+  document.getElementById('welcomeScreen').style.display='none';
+  updateMeChip();
+  renderSettle();
+  renderNotifs();
+}
+
+function showWelcome(){
+  const grid = document.getElementById('welcomeGrid');
+  const order = COUPLES.flatMap(c=>c.members).concat(SOLO);
+  grid.innerHTML = order.map(p=>{
+    const cp = coupleOf(p);
+    return `<div class="wpick" onclick="setMe('${p}')">
+      <div class="wav" style="background:${COLORS[p]}">${disp(p)[0]}</div>
+      <div class="wname">${disp(p)}</div>
+      <div class="wpair">${cp?coupleLabel(cp):'Solo'}</div>
+    </div>`;
+  }).join('');
+  document.getElementById('welcomeScreen').style.display='flex';
+}
+
+function updateMeChip(){
+  const chip = document.getElementById('meChip'); if(!chip) return;
+  if(ME && COLORS[ME]){
+    chip.innerHTML = `<span class="av" style="background:${COLORS[ME]};width:26px;height:26px;font-size:.7rem">${disp(ME)[0]}</span> ${disp(ME)}`;
+    chip.title = 'Eres ' + disp(ME) + ' · toca para cambiar';
+  } else {
+    chip.innerHTML = `<span style="padding:0 4px">👤 ¿Quién eres?</span>`;
+  }
+}
+
+/* ============ Notificaciones de pago ============ */
+function renderNotifs(){
+  const el = document.getElementById('notifBanners'); if(!el) return;
+  if(!ME){ el.innerHTML=''; return; }
+  const alerts = DB.alerts||{};
+  const settled = DB.settled||{};
+  const {net} = computeBalances();
+  // Calcular transferencias en ambos modos para buscar alertas relevantes
+  const indivBal = PEOPLE.map(p=>({key:p,label:disp(p),members:[p],net:net[p]}));
+  const tx = settle(indivBal.map(b=>({...b})));
+  // Buscar transferencias donde yo soy el cobrador y hay alerta pendiente
+  const myNotifs = tx.filter(t=>{
+    const key = txKey(t.from.key, t.to.key);
+    return t.to.members.includes(ME) && alerts[key] && !settled[key];
+  });
+  if(myNotifs.length===0){ el.innerHTML=''; return; }
+  el.innerHTML = myNotifs.map(t=>{
+    const key = txKey(t.from.key, t.to.key);
+    const al = alerts[key];
+    return `<div class="notif-banner">
+      <div class="ni">💸</div>
+      <div class="nt">
+        <b>${disp(t.from.label)} dice que te transfirió ${fmt(t.amount/100)}</b>
+        <span>¿Confirmás que recibiste el pago?</span>
+        <div class="na">
+          <button class="notif-confirm btn" onclick="markSettled('${key}')">✓ Sí, lo recibí</button>
+          <button class="notif-dismiss btn" onclick="dismissAlert('${key}')">✗ Aún no</button>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function renderAll(){ renderResumen(); renderCatFilter(); renderExpenses(); renderBalances(); renderSettle(); renderNotifs(); renderRateHistory(); }
+
+/* ============ Init ============ */
+(function init(){
+  syncSettings();
+  initFirebase().then(()=>{
+    // Mostrar bienvenida si no tiene identidad guardada
+    if(!ME) showWelcome();
+    else updateMeChip();
+  }).catch(()=>{
+    if(!ME) showWelcome();
+    else updateMeChip();
+  });
+})();
+</script>
+</body>
+</html>
