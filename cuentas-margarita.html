@@ -317,6 +317,7 @@ input,select{font-family:inherit;font-size:1rem}
 .btn-unsettled{padding:8px 14px;border-radius:10px;font-size:.8rem;font-weight:700;background:var(--neg-soft);color:var(--neg);transition:.15s}
 
 .wadmin{font-size:.62rem;font-weight:700;color:#7B5B2E;background:#FFF4E0;border-radius:999px;padding:2px 7px;margin-top:2px}
+.cur-badge{font-size:.72rem;font-weight:700;padding:3px 9px;border-radius:999px;white-space:nowrap;border:1px solid transparent}
 .admin-badge{font-size:.7rem;font-weight:700;background:#FFF4E0;color:#7B5B2E;border:1px solid #F6B64B;padding:3px 8px;border-radius:999px;white-space:nowrap}
 /* user chip en topbar */
 .me-chip{display:flex;align-items:center;gap:6px;padding:4px 10px 4px 4px;border-radius:999px;background:var(--surface);border:1px solid var(--line);box-shadow:var(--shadow);cursor:pointer;font-size:.76rem;font-weight:700;color:var(--ink-soft);flex:none}
@@ -860,61 +861,157 @@ function expenseBs(e){
   return r !== null ? e.amount * r : null;
 }
 
-/* ============ Motor de cálculo (centavos USD) ============ */
+/* ============ Motor de cálculo (centavos) ============ */
+
+// Tipo de pago canónico para agrupar (Bs y USD digital se calculan en USD pero son grupos distintos)
+function payGroup(cur){ return cur||'USD'; }
+
+// Shares de un gasto en sus centavos nativos (no convertidos a USD)
+// Para Bs devuelve centavos de Bs; para USD/USD_CASH centavos de $; para EUR centavos de €
 function expenseShares(exp){
   const out = {};
-  const rr = exp.repayRate||0;
-  if(exp.mode === 'exact'){
-    for(const p of exp.parts) out[p] = Math.round(toUSD(parseFloat(exp.exact[p])||0, exp.cur, rr)*100);
+  if(exp.mode==='exact'){
+    for(const p of exp.parts)
+      out[p] = Math.round((parseFloat(exp.exact[p])||0)*100);
   } else {
-    const totalC = Math.round(toUSD(exp.amount, exp.cur, rr)*100);
+    const totalC = Math.round((exp.amount||0)*100);
     const n = exp.parts.length;
     if(n>0){
-      const base = Math.floor(totalC/n); let rem = totalC - base*n;
-      for(const p of exp.parts){ out[p] = base + (rem>0?1:0); if(rem>0) rem--; }
+      const base=Math.floor(totalC/n); let rem=totalC-base*n;
+      for(const p of exp.parts){ out[p]=base+(rem>0?1:0); if(rem>0)rem--; }
     }
   }
   return out;
 }
-function computeBalances(){
-  const paid = {}, owes = {};
-  PEOPLE.forEach(p=>{paid[p]=0;owes[p]=0;});
-  for(const exp of DB.expenses){
-    const rr = exp.repayRate||0;
-    const totalC = Math.round(toUSD(exp.amount, exp.cur, rr)*100);
-    if(exp.payers && typeof exp.payers==='object'){
-      for(const [p,amt] of Object.entries(exp.payers)){
-        if(paid[p]!==undefined) paid[p] += Math.round(toUSD(parseFloat(amt)||0, exp.cur, rr)*100);
-      }
-    } else if(exp.paidBy && paid[exp.paidBy]!==undefined){
-      paid[exp.paidBy] += (exp.mode==='exact')
-        ? Object.values(expenseShares(exp)).reduce((a,b)=>a+b,0) : totalC;
+
+// Shares en USD equivalente (para resumen/balances generales)
+function expenseSharesUSD(exp){
+  const out={}, rr=exp.repayRate||0;
+  if(exp.mode==='exact'){
+    for(const p of exp.parts)
+      out[p]=Math.round(toUSD(parseFloat(exp.exact[p])||0, exp.cur, rr)*100);
+  } else {
+    const totalC=Math.round(toUSD(exp.amount, exp.cur, rr)*100);
+    const n=exp.parts.length;
+    if(n>0){
+      const base=Math.floor(totalC/n); let rem=totalC-base*n;
+      for(const p of exp.parts){ out[p]=base+(rem>0?1:0); if(rem>0)rem--; }
     }
-    const sh = expenseShares(exp);
-    for(const p in sh) owes[p] += sh[p];
   }
-  const net = {}; PEOPLE.forEach(p=> net[p] = paid[p]-owes[p]);
-  return {paid, owes, net};
+  return out;
 }
+
+// Calcula balances generales en USD (para Resumen y Balances)
+// excludeSettled=false → incluye todo; excludeSettled=true → excluye transferencias ya saldadas
+function computeBalances(excludeSettled=false){
+  const paid={}, owes={};
+  PEOPLE.forEach(p=>{paid[p]=0;owes[p]=0;});
+  const settled = excludeSettled ? (DB.settled||{}) : {};
+
+  for(const exp of DB.expenses){
+    const rr=exp.repayRate||0;
+    const totalC=Math.round(toUSD(exp.amount,exp.cur,rr)*100);
+    if(exp.payers && typeof exp.payers==='object'){
+      for(const [p,amt] of Object.entries(exp.payers))
+        if(paid[p]!==undefined) paid[p]+=Math.round(toUSD(parseFloat(amt)||0,exp.cur,rr)*100);
+    } else if(exp.paidBy && paid[exp.paidBy]!==undefined){
+      paid[exp.paidBy]+=(exp.mode==='exact')
+        ? Object.values(expenseSharesUSD(exp)).reduce((a,b)=>a+b,0) : totalC;
+    }
+    const sh=expenseSharesUSD(exp);
+    for(const p in sh) owes[p]+=sh[p];
+  }
+  const net={}; PEOPLE.forEach(p=> net[p]=paid[p]-owes[p]);
+  return {paid,owes,net};
+}
+
 function coupleBalances(net){
-  const rows = [];
-  for(const c of COUPLES) rows.push({key:c.id, kind:'couple', members:c.members, label:coupleLabel(c), net:c.members.reduce((s,m)=>s+net[m],0)});
-  for(const s of SOLO) rows.push({key:s, kind:'solo', members:[s], label:disp(s), net:net[s]});
+  const rows=[];
+  for(const c of COUPLES) rows.push({key:c.id,kind:'couple',members:c.members,label:coupleLabel(c),net:c.members.reduce((s,m)=>s+net[m],0)});
+  for(const s of SOLO) rows.push({key:s,kind:'solo',members:[s],label:disp(s),net:net[s]});
   return rows;
 }
-function settle(balances){
-  const debt = balances.filter(b=>b.net < -0.5).map(b=>({...b}));
-  const cred = balances.filter(b=>b.net > 0.5).map(b=>({...b}));
+
+// Algoritmo greedy de liquidación para un grupo de balances (en centavos de la misma moneda)
+function settleGroup(balances){
+  const debt=balances.filter(b=>b.net<-0.5).map(b=>({...b}));
+  const cred=balances.filter(b=>b.net>0.5).map(b=>({...b}));
   debt.sort((a,b)=>a.net-b.net); cred.sort((a,b)=>b.net-a.net);
-  const tx = []; let i=0,j=0;
+  const tx=[]; let i=0,j=0;
   while(i<debt.length && j<cred.length){
-    const d=debt[i], c=cred[j]; const amt=Math.min(-d.net,c.net);
-    if(amt>0.5) tx.push({from:d, to:c, amount:amt});
+    const d=debt[i],c=cred[j]; const amt=Math.min(-d.net,c.net);
+    if(amt>0.5) tx.push({from:d,to:c,amount:amt});
     d.net+=amt; c.net-=amt;
-    if(Math.abs(d.net)<0.5) i++; if(Math.abs(c.net)<0.5) j++;
+    if(Math.abs(d.net)<0.5)i++; if(Math.abs(c.net)<0.5)j++;
   }
   return tx;
 }
+
+// Motor principal: calcula transferencias separadas por tipo de pago,
+// excluyendo las ya saldadas del cálculo.
+// Devuelve [{from, to, amount, cur, rateType, key}]
+function computeSettlements(mode){
+  const settled = DB.settled||{};
+
+  // Agrupar personas o parejas
+  const entities = mode==='pareja'
+    ? [...COUPLES.map(c=>({key:c.id,label:coupleLabel(c),members:c.members})),
+       ...SOLO.map(s=>({key:s,label:disp(s),members:[s]}))]
+    : PEOPLE.map(p=>({key:p,label:disp(p),members:[p]}));
+
+  // Para cada tipo de pago, calcular balances netos entre entidades
+  // cur: USD | USD_CASH | EUR | Bs
+  const GROUPS = ['USD','USD_CASH','EUR','Bs'];
+  const allTx = [];
+
+  for(const cur of GROUPS){
+    // Balances netos en centavos nativos de esa moneda
+    const paid={}, owes={};
+    entities.forEach(e=>{e.members.forEach(m=>{paid[m]=0; owes[m]=0;});});
+
+    for(const exp of DB.expenses){
+      if(payGroup(exp.cur)!==cur) continue;
+
+      // ¿Está saldada esta deuda? Usamos clave por (pagador,cobrador,cur)
+      // No excluimos por saldado a nivel de gasto sino de par de transferencia —
+      // los gastos contribuyen al balance; las transferencias saldadas se restan después.
+
+      const sh = expenseShares(exp); // en centavos nativos
+      // Crédito a quien pagó
+      if(exp.payers && typeof exp.payers==='object'){
+        for(const [p,amt] of Object.entries(exp.payers))
+          if(paid[p]!==undefined) paid[p]+=Math.round((parseFloat(amt)||0)*100);
+      } else if(exp.paidBy && paid[exp.paidBy]!==undefined){
+        const totalC=Math.round((exp.amount||0)*100);
+        paid[exp.paidBy]+=(exp.mode==='exact')
+          ? Object.values(sh).reduce((a,b)=>a+b,0) : totalC;
+      }
+      for(const p in sh) if(owes[p]!==undefined) owes[p]+=sh[p];
+    }
+
+    // Net por entidad (suma de sus miembros)
+    const entityBals = entities.map(e=>({
+      ...e,
+      net: e.members.reduce((s,m)=>(s + (paid[m]||0) - (owes[m]||0)),0)
+    }));
+
+    // Calcular transferencias óptimas (sin descontar saldadas aún)
+    const rawTx = settleGroup(entityBals.map(b=>({...b})));
+
+    // Descontar transferencias ya saldadas restando su monto del balance
+    // y marcar cada tx con su key y estado
+    for(const t of rawTx){
+      const key = txKey(t.from.key, t.to.key, cur, mode);
+      const isSettled = !!settled[key];
+      allTx.push({...t, cur, key, isSettled});
+    }
+  }
+
+  return allTx;
+}
+
+// Compatibilidad: función settle legacy usada en renderBalances (solo USD)
+function settle(balances){ return settleGroup(balances); }
 
 /* ============ Avatares ============ */
 function avatar(p, cls=''){ return `<span class="av ${cls}" style="background:${COLORS[p]}">${disp(p)[0].toUpperCase()}</span>`; }
@@ -929,7 +1026,7 @@ function renderResumen(){
   const full = fmt(totalUSD); const [intp, dec] = full.split(',');
   document.getElementById('heroTotal').innerHTML = `${intp}<span class="cents">,${dec||'00'}</span>`;
   document.getElementById('heroPP').textContent = fmt(totalUSD/PEOPLE.length);
-  document.getElementById('heroTx').textContent = settle(PEOPLE.map(p=>({key:p,net:net[p]}))).length;
+  document.getElementById('heroTx').textContent = computeSettlements('indiv').filter(t=>!t.isSettled).length;
 
   const act = DB.bsMode;
   document.getElementById('ratePill').innerHTML =
@@ -1074,49 +1171,58 @@ function setView3(m){ setMode=m;
   renderSettle();
 }
 
-// Genera un ID único para cada transferencia (determinista: siempre el mismo para el mismo par)
-function txKey(fromKey, toKey){ return [fromKey,toKey].sort().join('__')+'__'+setMode; }
+// Key determinista por par + moneda + modo (indiv/pareja)
+function txKey(fromKey, toKey, cur, mode){
+  return [fromKey,toKey].sort().join('__')+'__'+(cur||'USD')+'__'+(mode||setMode);
+}
 
 function renderSettle(){
-  const {net} = computeBalances();
-  const balances = setMode==='indiv'
-    ? PEOPLE.map(p=>({key:p,label:disp(p),members:[p],net:net[p]}))
-    : coupleBalances(net).map(r=>({key:r.key,label:r.label,members:r.members,net:r.net}));
-  const tx = settle(balances.map(b=>({...b})));
   const el = document.getElementById('settleList');
   if(DB.expenses.length===0){
     el.innerHTML = `<div class="empty"><div class="em">🤝</div><div class="t1">Nada que liquidar todavía</div><div class="t2">Agrega gastos y aquí aparecerá el plan de pagos más corto.</div></div>`;
     return;
   }
-  if(tx.length===0){
-    el.innerHTML = `<div class="allset"><div class="em">🌴✅</div><div class="t1">¡Todo saldado!</div><div class="t2">Nadie le debe nada a nadie. Disfruten Margarita.</div></div>`;
-    return;
-  }
 
+  const allTx   = computeSettlements(setMode);
   const settled = DB.settled||{};
   const alerts  = DB.alerts||{};
   const me = ME;
 
-  // Construir la tarjeta de cada transferencia
+  if(allTx.length===0){
+    el.innerHTML = `<div class="allset"><div class="em">🌴✅</div><div class="t1">¡Todo saldado!</div><div class="t2">Nadie le debe nada a nadie. Disfruten Margarita.</div></div>`;
+    return;
+  }
+
+  // Símbolo y label por tipo de moneda
+  const CUR_SYM   = {USD:'$',USD_CASH:'$ cash',EUR:'€',Bs:'Bs'};
+  const CUR_LABEL = {USD:'Dólar digital',USD_CASH:'Dólar efectivo',EUR:'Euro',Bs:'Bolívares'};
+  const CUR_COLOR = {USD:'var(--sea-dark)',USD_CASH:'#7B5B2E',EUR:'#4E59C7',Bs:'#1a6b3c'};
+  const CUR_BG    = {USD:'var(--sea-soft)',USD_CASH:'#FFF4E0',EUR:'#EEF0FF',Bs:'var(--pos-soft)'};
+
+  function fmtNative(cents, cur){
+    const sym = CUR_SYM[cur]||'$';
+    return sym+' '+nfp(cents/100);
+  }
+
   function txCard(t){
-    const key      = txKey(t.from.key, t.to.key);
+    const key      = t.key;
     const isSettled= !!settled[key];
     const hasAlert = !!alerts[key];
     const amPayer  = me && t.from.members.includes(me);
     const amPayee  = me && t.to.members.includes(me);
     const admin    = isAdmin();
-    // Admin puede confirmar cualquier transferencia salvo la suya propia como pagador
     const canConfirm = amPayee || (admin && !amPayer);
     const fromAv   = avatarsFor(t.from.members), toAv = avatarsFor(t.to.members);
-    const bs       = DB.displayCur!=='Bs' ? `<small>${fmt(t.amount/100,{cur:'Bs'})}</small>` : '';
-    // Badge admin visible solo cuando no es parte directa del pago
     const adminBadge = (admin && !amPayer && !amPayee)
       ? `<span class="admin-badge">👑 Admin</span>` : '';
 
-    let metaHtml = '';
+    // Badge de tipo de moneda
+    const curBadge = `<span class="cur-badge" style="background:${CUR_BG[t.cur]};color:${CUR_COLOR[t.cur]}">${CUR_SYM[t.cur]} ${CUR_LABEL[t.cur]}</span>`;
+
+    let metaHtml = curBadge;
     if(isSettled){
       const sd = settled[key];
-      metaHtml = `<div class="tx-settled">
+      metaHtml += `<div class="tx-settled">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M20 6 9 17l-5-5"/></svg>
         Pagado${sd.by?' · confirmado por '+disp(sd.by)+(ADMINS.has(sd.by)&&sd.by!==t.to.members[0]?' 👑':''):''}${sd.at?' el '+new Date(sd.at).toLocaleDateString('es-VE',{day:'numeric',month:'short'}):''}
       </div>
@@ -1126,9 +1232,7 @@ function renderSettle(){
         metaHtml += `<div class="tx-alert"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M13 16h-1v-4h-1m1-4h.01M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10 10-4.5 10-10S17.5 2 12 2z"/></svg>${disp(t.from.label)} avisó que pagó</div>`;
       }
       if(canConfirm){
-        const lbl = amPayee
-          ? '✓ Confirmar recibido'
-          : `✓ Confirmar que ${disp(t.to.label)} recibió`;
+        const lbl = amPayee ? '✓ Confirmar recibido' : `✓ Confirmar que ${disp(t.to.label)} recibió`;
         metaHtml += `${adminBadge}<button class="btn-settle" onclick="markSettled('${key}')">${lbl}</button>`;
         if(hasAlert) metaHtml += `<button class="notif-dismiss" style="padding:8px 12px;border-radius:10px;font-size:.8rem;font-weight:700" onclick="dismissAlert('${key}')">Ignorar aviso</button>`;
       } else if(amPayer){
@@ -1145,19 +1249,17 @@ function renderSettle(){
         <div class="arrow">${fromAv}<span class="who">${t.from.label}</span>
           <span class="arr"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span>
           ${toAv}<span class="who">${t.to.label}</span></div>
-        <div class="pay">${fmt(t.amount/100)}${bs}</div>
+        <div class="pay">${fmtNative(t.amount, t.cur)}</div>
       </div>
       <div class="tx-meta">${metaHtml}</div>
     </div>`;
   }
 
-  // Separar pendientes y saldados
-  const pending  = tx.filter(t => !settled[txKey(t.from.key, t.to.key)]);
-  const doneList = tx.filter(t =>  settled[txKey(t.from.key, t.to.key)]);
+  const pending  = allTx.filter(t=>!t.isSettled);
+  const doneList = allTx.filter(t=> t.isSettled);
 
-  const rateInfo = `<div class="rate">Mostrando en ${DB.displayCur==='Bs'?('Bs · tasa '+rateLabel(DB.bsMode)):DB.displayCur} · BCV ${nfp(DB.bcvUsd)} · € ${nfp(DB.bcvEur)} · Par ${nfp(DB.parUsd)}</div>`;
+  const rateInfo = `<div class="rate">BCV ${nfp(DB.bcvUsd)} Bs/$ · € ${nfp(DB.bcvEur)} Bs/€ · Par ${nfp(DB.parUsd)} Bs/$</div>`;
 
-  // ── Sección pendientes ──
   let html = `<div class="settle-head">
     <div class="top">
       <div class="big">${pending.length}</div>
@@ -1172,7 +1274,6 @@ function renderSettle(){
     html += `<div class="settle-section">${pending.map(txCard).join('')}</div>`;
   }
 
-  // ── Sección saldados (solo si hay alguno) ──
   if(doneList.length>0){
     html += `<div class="settle-done-head">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="16" height="16"><path d="M20 6 9 17l-5-5"/></svg>
@@ -1766,29 +1867,25 @@ function updateMeChip(){
 function renderNotifs(){
   const el = document.getElementById('notifBanners'); if(!el) return;
   if(!ME){ el.innerHTML=''; return; }
-  const alerts = DB.alerts||{};
+  const alerts  = DB.alerts||{};
   const settled = DB.settled||{};
-  const {net} = computeBalances();
-  // Calcular transferencias en ambos modos para buscar alertas relevantes
-  const indivBal = PEOPLE.map(p=>({key:p,label:disp(p),members:[p],net:net[p]}));
-  const tx = settle(indivBal.map(b=>({...b})));
-  // Buscar transferencias donde yo soy el cobrador y hay alerta pendiente
-  const myNotifs = tx.filter(t=>{
-    const key = txKey(t.from.key, t.to.key);
-    return t.to.members.includes(ME) && alerts[key] && !settled[key];
-  });
+  // Buscar en todas las transferencias las que me corresponden cobrar y tienen alerta
+  const allTx = computeSettlements('indiv');
+  const myNotifs = allTx.filter(t=>
+    t.to.members.includes(ME) && alerts[t.key] && !settled[t.key]
+  );
   if(myNotifs.length===0){ el.innerHTML=''; return; }
+  const CUR_SYM = {USD:'$',USD_CASH:'$ cash',EUR:'€',Bs:'Bs'};
   el.innerHTML = myNotifs.map(t=>{
-    const key = txKey(t.from.key, t.to.key);
-    const al = alerts[key];
+    const sym = CUR_SYM[t.cur]||'$';
     return `<div class="notif-banner">
       <div class="ni">💸</div>
       <div class="nt">
-        <b>${disp(t.from.label)} dice que te transfirió ${fmt(t.amount/100)}</b>
+        <b>${disp(t.from.label)} dice que te transfirió ${sym} ${nfp(t.amount/100)}</b>
         <span>¿Confirmás que recibiste el pago?</span>
         <div class="na">
-          <button class="notif-confirm btn" onclick="markSettled('${key}')">✓ Sí, lo recibí</button>
-          <button class="notif-dismiss btn" onclick="dismissAlert('${key}')">✗ Aún no</button>
+          <button class="notif-confirm btn" onclick="markSettled('${t.key}')">✓ Sí, lo recibí</button>
+          <button class="notif-dismiss btn" onclick="dismissAlert('${t.key}')">✗ Aún no</button>
         </div>
       </div>
     </div>`;
