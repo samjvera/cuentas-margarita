@@ -940,9 +940,12 @@ function expenseSharesUSD(exp){
 }
 
 // Balances generales en USD (Resumen y Balances)
+// Las transferencias saldadas usan el monto exacto guardado al momento de saldar
 function computeBalances(){
-  const paid={},owes={};
-  PEOPLE.forEach(p=>{paid[p]=0;owes[p]=0;});
+  const paid={}, owes={};
+  PEOPLE.forEach(p=>{paid[p]=0; owes[p]=0;});
+
+  // 1) Acumular créditos y deudas por gastos
   for(const exp of DB.expenses){
     const rr=exp.repayRate||0, pt=exp.payType||'USD';
     const totalC=Math.round(toUSD(exp.amount,pt,rr)*100);
@@ -956,8 +959,25 @@ function computeBalances(){
     const sh=expenseSharesUSD(exp);
     for(const p in sh) owes[p]+=sh[p];
   }
+
   const net={}; PEOPLE.forEach(p=>net[p]=paid[p]-owes[p]);
-  return {paid,owes,net};
+
+  // 2) Descontar transferencias ya saldadas usando from/to y monto guardados
+  const settled = DB.settled||{};
+  for(const [key, sd] of Object.entries(settled)){
+    if(!sd || !sd.amt || !sd.from || !sd.to) continue;
+    // Solo procesar keys de modo 'indiv' para no doble-contar
+    if(!key.endsWith('__indiv')) continue;
+    // Convertir monto nativo a USD
+    const amtUsd = sd.cur==='Bs' ? sd.amt/100/(DB.bcvUsd||1) : sd.amt/100;
+    const amtC = Math.round(amtUsd*100);
+    const fromP = sd.from, toP = sd.to;
+    // from pagó → balance sube; to cobró → balance baja
+    if(PEOPLE.includes(fromP)) net[fromP] = (net[fromP]||0) + amtC;
+    if(PEOPLE.includes(toP))   net[toP]   = (net[toP]||0)   - amtC;
+  }
+
+  return {paid, owes, net};
 }
 
 function coupleBalances(net){
@@ -1008,7 +1028,9 @@ function computeSettlements(mode){
     const entityBals=entities.map(e=>({...e,net:e.members.reduce((s,m)=>s+(paid[m]||0)-(owes[m]||0),0)}));
     for(const t of settleGroup(entityBals.map(b=>({...b})))){
       const key=txKey(t.from.key,t.to.key,grp,mode);
-      allTx.push({...t,payType:grp,key,isSettled:!!settled[key]});
+      // Se considera saldado si el key propio está saldado O alguno de sus equivalentes
+      const isSett = !!settled[key] || crossKeys(key).some(k=>!!settled[k]);
+      allTx.push({...t,payType:grp,key,isSettled:isSett});
     }
   }
   return allTx;
@@ -1236,7 +1258,7 @@ function renderSettle(){
       }
       if(canConfirm){
         const lbl = amPayee ? '✓ Confirmar recibido' : `✓ Confirmar que ${disp(t.to.label)} recibió`;
-        metaHtml += `${adminBadge}<button class="btn-settle" onclick="markSettled('${key}')">${lbl}</button>`;
+        metaHtml += `${adminBadge}<button class="btn-settle" onclick="markSettled('${key}',${JSON.stringify({key,amount:t.amount,payType:t.payType,from:{key:t.from.key},to:{key:t.to.key}})})">${lbl}</button>`;
         if(hasAlert) metaHtml += `<button class="notif-dismiss" style="padding:8px 12px;border-radius:10px;font-size:.8rem;font-weight:700" onclick="dismissAlert('${key}')">Ignorar aviso</button>`;
       } else if(amPayer){
         metaHtml += hasAlert
@@ -1288,25 +1310,78 @@ function renderSettle(){
   el.innerHTML = html;
 }
 
-function markSettled(key){
+// Dado un key indiv, devuelve el key de pareja equivalente (y viceversa)
+// Solo genera UN cross-key por dirección, sin generar keys de otros miembros
+function crossKeys(key){
+  const parts = key.split('__');
+  if(parts.length<4) return [];
+  const [a, b, cur, mode] = parts;
+  if(mode==='pareja'){
+    // pareja → los indiv de cada combinación miembro-a × miembro-b
+    const membersA = COUPLES.find(c=>c.id===a)?.members || (PEOPLE.includes(a)?[a]:[]);
+    const membersB = COUPLES.find(c=>c.id===b)?.members || (PEOPLE.includes(b)?[b]:[]);
+    const keys=[];
+    for(const ma of membersA)
+      for(const mb of membersB)
+        keys.push(txKey(ma,mb,cur,'indiv'));
+    return keys;
+  } else {
+    // indiv → solo el key de pareja si ambos pertenecen a parejas distintas
+    const coupleA = COUPLES.find(c=>c.members.includes(a));
+    const coupleB = COUPLES.find(c=>c.members.includes(b));
+    const keyA = coupleA ? coupleA.id : a;
+    const keyB = coupleB ? coupleB.id : b;
+    if(keyA===keyB) return []; // misma pareja, no hay cross-key
+    return [txKey(keyA,keyB,cur,'pareja')];
+  }
+}
+
+function markSettled(key, txSnapshot){
   if(!DB.settled) DB.settled={};
-  DB.settled[key]={by:ME, at:new Date().toISOString()};
-  // limpiar alerta si la había
-  if(DB.alerts && DB.alerts[key]) delete DB.alerts[key];
-  save(); renderSettle(); renderResumen(); toast('✓ Pago confirmado');
+  const tx = txSnapshot || computeSettlements(setMode).find(t=>t.key===key);
+  // from/to siempre como individuo (primer miembro si es pareja)
+  const fromKey = tx ? (tx.from.members && tx.from.members.length>0 ? tx.from.members[0] : tx.from.key) : null;
+  const toKey   = tx ? (tx.to.members   && tx.to.members.length>0   ? tx.to.members[0]   : tx.to.key)   : null;
+  const sd = {
+    by:   ME,
+    at:   new Date().toISOString(),
+    amt:  tx ? tx.amount  : 0,
+    cur:  tx ? tx.payType : 'USD',
+    from: fromKey,
+    to:   toKey,
+  };
+  DB.settled[key] = sd;
+  // Solo marcar el cross-key de pareja (no genera keys indiv adicionales)
+  for(const k of crossKeys(key)){
+    DB.settled[k] = {...sd};
+  }
+  if(DB.alerts){
+    delete DB.alerts[key];
+    for(const k of crossKeys(key)) delete DB.alerts[k];
+  }
+  save(); renderSettle(); renderResumen(); renderBalances(); renderNotifs();
+  toast('✓ Pago confirmado');
 }
 function unsettle(key){
-  if(DB.settled && DB.settled[key]) delete DB.settled[key];
-  save(); renderSettle(); renderResumen(); toast('Pago desmarcado');
+  if(!DB.settled) return;
+  delete DB.settled[key];
+  // Desmarcar también los equivalentes en el otro modo
+  for(const k of crossKeys(key)) delete DB.settled[k];
+  save(); renderSettle(); renderResumen(); renderBalances(); renderNotifs();
+  toast('Pago desmarcado');
 }
 function sendAlert(key){
   if(!DB.alerts) DB.alerts={};
   DB.alerts[key]={from:ME, at:new Date().toISOString()};
-  save(); renderSettle(); toast('📨 Aviso enviado al cobrador');
+  // Propagar alerta al otro modo para que ambas vistas la muestren
+  for(const k of crossKeys(key)) DB.alerts[k]={from:ME, at:new Date().toISOString()};
+  save(); renderSettle(); renderNotifs(); toast('📨 Aviso enviado al cobrador');
 }
 function dismissAlert(key){
-  if(DB.alerts && DB.alerts[key]) delete DB.alerts[key];
-  save(); renderSettle(); toast('Aviso descartado');
+  if(!DB.alerts) return;
+  delete DB.alerts[key];
+  for(const k of crossKeys(key)) delete DB.alerts[k];
+  save(); renderSettle(); renderNotifs(); toast('Aviso descartado');
 }
 
 /* ============ Formulario de gasto ============ */
@@ -1899,7 +1974,7 @@ function renderNotifs(){
         <b>${disp(t.from.label)} dice que te transfirió ${sym} ${nfp(t.amount/100)}</b>
         <span>¿Confirmás que recibiste el pago?</span>
         <div class="na">
-          <button class="notif-confirm btn" onclick="markSettled('${t.key}')">✓ Sí, lo recibí</button>
+          <button class="notif-confirm btn" onclick="markSettled('${t.key}',${JSON.stringify({key:t.key,amount:t.amount,payType:t.payType,from:{key:t.from.key},to:{key:t.to.key}})})">✓ Sí, lo recibí</button>
           <button class="notif-dismiss btn" onclick="dismissAlert('${t.key}')">✗ Aún no</button>
         </div>
       </div>
