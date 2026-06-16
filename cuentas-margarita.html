@@ -1258,7 +1258,8 @@ function renderSettle(){
       }
       if(canConfirm){
         const lbl = amPayee ? '✓ Confirmar recibido' : `✓ Confirmar que ${disp(t.to.label)} recibió`;
-        metaHtml += `${adminBadge}<button class="btn-settle" onclick="markSettled('${key}',${JSON.stringify({key,amount:t.amount,payType:t.payType,from:{key:t.from.key},to:{key:t.to.key}})})">${lbl}</button>`;
+        const snapId = _snap(t);
+        metaHtml += `${adminBadge}<button class="btn-settle" onclick="markSettledById('${key}','${snapId}')">${lbl}</button>`;
         if(hasAlert) metaHtml += `<button class="notif-dismiss" style="padding:8px 12px;border-radius:10px;font-size:.8rem;font-weight:700" onclick="dismissAlert('${key}')">Ignorar aviso</button>`;
       } else if(amPayer){
         metaHtml += hasAlert
@@ -1335,6 +1336,11 @@ function crossKeys(key){
     return [txKey(keyA,keyB,cur,'pareja')];
   }
 }
+
+// Snapshots de transferencias indexados por ID temporal (evita JSON en atributos onclick)
+const _txSnaps = {};
+function _snap(tx){ const id='s'+Math.random().toString(36).slice(2,8); _txSnaps[id]=tx; return id; }
+function markSettledById(key, snapId){ markSettled(key, _txSnaps[snapId]||null); delete _txSnaps[snapId]; }
 
 function markSettled(key, txSnapshot){
   if(!DB.settled) DB.settled={};
@@ -1974,7 +1980,7 @@ function renderNotifs(){
         <b>${disp(t.from.label)} dice que te transfirió ${sym} ${nfp(t.amount/100)}</b>
         <span>¿Confirmás que recibiste el pago?</span>
         <div class="na">
-          <button class="notif-confirm btn" onclick="markSettled('${t.key}',${JSON.stringify({key:t.key,amount:t.amount,payType:t.payType,from:{key:t.from.key},to:{key:t.to.key}})})">✓ Sí, lo recibí</button>
+          <button class="notif-confirm btn" onclick="markSettledById('${t.key}','${_snap(t)}')">✓ Sí, lo recibí</button>
           <button class="notif-dismiss btn" onclick="dismissAlert('${t.key}')">✗ Aún no</button>
         </div>
       </div>
