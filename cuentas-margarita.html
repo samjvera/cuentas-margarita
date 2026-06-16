@@ -609,7 +609,7 @@ input,select{font-family:inherit;font-size:1rem}
       </div>
       <div class="fl">
         <label for="fDate">Fecha</label>
-        <input id="fDate" class="txtin" type="date">
+        <input id="fDate" class="txtin" type="date" onchange="onAmountChange()">
       </div>
       <div class="save-bar">
         <button class="btn btn-sea" id="saveBtn" onclick="saveExpense()">Guardar gasto</button>
@@ -697,6 +697,15 @@ function activeUsd(){ return DB.bsMode==='par' ? (DB.parUsd||DB.bcvUsd) : DB.bcv
 function rateLabel(mode){ return mode==='par' ? 'USDT/Par' : 'BCV'; }
 // Bs por 1 unidad de la moneda del gasto, según un tipo de tasa
 function rateFor(cur, mode){ return cur==='EUR' ? (DB.bcvEur||0) : (mode==='par' ? (DB.parUsd||DB.bcvUsd) : DB.bcvUsd); }
+// Tasas del histórico para una fecha (o las actuales si no hay entrada)
+function rateForDate(date){
+  if(!date) return {bcvUsd:DB.bcvUsd, bcvEur:DB.bcvEur, parUsd:DB.parUsd};
+  const hist = (DB.rateHistory||[]).slice().sort((a,b)=>b.date.localeCompare(a.date));
+  const entry = hist.find(r=>r.date===date) || hist.find(r=>r.date<date);
+  return entry
+    ? {bcvUsd:entry.bcvUsd||DB.bcvUsd, bcvEur:entry.bcvEur||DB.bcvEur, parUsd:entry.parUsd||DB.parUsd}
+    : {bcvUsd:DB.bcvUsd, bcvEur:DB.bcvEur, parUsd:DB.parUsd};
+}
 
 /* ============ Firebase — persistencia en tiempo real ============ */
 const FB_CFG = {
@@ -799,7 +808,14 @@ function applyDefaults(d){
     expenses:[], categories:[], rate:1.08,
     bcvUsd:592.52, bcvEur:687.70, parUsd:789.67,
     bsMode:'bcv', ratesDate:'', ratesUpdated:'',
-    rateHistory:[],
+    rateHistory:[
+      // Tasas BCV oficiales semana del viaje (fuente: bcv.today / bcv.org.ve / arepatecnologica.com)
+      // Sáb 13 y Dom 14: BCV no publica fines de semana → misma tasa del viernes 12
+      {date:'2026-06-13', bcvUsd:582.6862, bcvEur:671.4234, parUsd:null, note:'Sáb (tasa vie 12)'},
+      {date:'2026-06-14', bcvUsd:582.6862, bcvEur:671.4234, parUsd:null, note:'Dom (tasa vie 12)'},
+      {date:'2026-06-15', bcvUsd:587.4059, bcvEur:680.08,   parUsd:null},
+      {date:'2026-06-16', bcvUsd:592.5163, bcvEur:687.698,  parUsd:null},
+    ],
     displayCur:'USD', defaultCur:'USD',
     settled:{}, alerts:{}
   };
@@ -1440,7 +1456,9 @@ function renderRateType(){
   const m=form.rateType==='par'?'par':'bcv';
   document.getElementById('rt_bcv').classList.toggle('on',m==='bcv');
   document.getElementById('rt_par').classList.toggle('on',m==='par');
-  const r=m==='par'?(DB.parUsd||DB.bcvUsd):(DB.bcvUsd||0);
+  const fdate = document.getElementById('fDate').value;
+  const dr = rateForDate(fdate);
+  const r = m==='par' ? (dr.parUsd||dr.bcvUsd) : (dr.bcvUsd||0);
   const nativeBs=toNative(amt,form.inputCur);
   const usdEq=r>0?nativeBs/r:0;
   let msg=`Tasa ref. ${rateLabel(m)} · ${nfp(r)} Bs/$`;
@@ -1502,12 +1520,23 @@ function saveExpense(){
   const date=document.getElementById('fDate').value;
   const parts=[...form.parts];
   const exact={}; if(form.mode==='exact') parts.forEach(p=>exact[p]=parseFloat(form.exact[p])||0);
-  // Convertir a monto NATIVO del payType
-  const nativeAmt=form.payType==='Bs'?toNative(rawAmt,form.inputCur):rawAmt;
-  // Tasa de referencia (solo para Bs)
-  const repayRate=form.payType==='Bs'
-    ?(form.rateType==='par'?(DB.parUsd||DB.bcvUsd):(DB.bcvUsd||0))
-    :null;
+  // Tasa de referencia: usar la tasa de la fecha del gasto si está en el histórico
+  const dateRates = rateForDate(date);
+  const repayRate = form.payType==='Bs'
+    ? (form.rateType==='par' ? (dateRates.parUsd||dateRates.bcvUsd) : dateRates.bcvUsd)
+    : null;
+  const rateDate = date || '';
+  // Monto nativo: para Bs convertir según la inputCur usando las tasas de esa fecha
+  function toNativeWithRates(amt, ic, rates){
+    switch(ic){
+      case 'Bs':      return amt;
+      case 'USD_BCV': return amt * (rates.bcvUsd||DB.bcvUsd||1);
+      case 'USD_PAR': return amt * (rates.parUsd||rates.bcvUsd||DB.bcvUsd||1);
+      case 'EUR':     return amt * (rates.bcvEur||DB.bcvEur||1);
+      default:        return amt;
+    }
+  }
+  const nativeAmt = form.payType==='Bs' ? toNativeWithRates(rawAmt, form.inputCur, dateRates) : rawAmt;
   const payers=Object.assign({},form.payers);
   const ps=Object.keys(payers);
   if(ps.length===1&&!(parseFloat(payers[ps[0]])>0)) payers[ps[0]]=nativeAmt;
