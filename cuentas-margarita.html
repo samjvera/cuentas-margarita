@@ -130,6 +130,18 @@ input,select{font-family:inherit;font-size:1rem}
 .balamt .t{font-size:.66rem;font-weight:700;text-transform:uppercase;letter-spacing:.04em}
 .pos-c{color:var(--pos)}.neg-c{color:var(--neg)}.zero-c{color:var(--muted)}
 
+.settle-section{}
+.settle-done{ opacity:.6; }
+.settle-done-head{
+  display:flex;align-items:center;gap:7px;
+  padding:11px 14px 10px;
+  font-size:.8rem;font-weight:700;color:var(--pos);
+  background:var(--pos-soft);
+  border-top:2px solid var(--pos);
+  border-bottom:1px solid var(--line);
+  margin-top:0;
+  letter-spacing:.01em;
+}
 .settle-head{padding:14px;border-bottom:1px solid var(--line)}
 .settle-head .top{display:flex;align-items:center;gap:12px}
 .settle-head .big{font-family:'Fraunces',serif;font-size:2rem;font-weight:600;line-height:1}
@@ -304,6 +316,8 @@ input,select{font-family:inherit;font-size:1rem}
 .btn-alert:hover{background:#ffd5c8}
 .btn-unsettled{padding:8px 14px;border-radius:10px;font-size:.8rem;font-weight:700;background:var(--neg-soft);color:var(--neg);transition:.15s}
 
+.wadmin{font-size:.62rem;font-weight:700;color:#7B5B2E;background:#FFF4E0;border-radius:999px;padding:2px 7px;margin-top:2px}
+.admin-badge{font-size:.7rem;font-weight:700;background:#FFF4E0;color:#7B5B2E;border:1px solid #F6B64B;padding:3px 8px;border-radius:999px;white-space:nowrap}
 /* user chip en topbar */
 .me-chip{display:flex;align-items:center;gap:6px;padding:4px 10px 4px 4px;border-radius:999px;background:var(--surface);border:1px solid var(--line);box-shadow:var(--shadow);cursor:pointer;font-size:.76rem;font-weight:700;color:var(--ink-soft);flex:none}
 .me-chip .av{width:26px;height:26px;font-size:.7rem}
@@ -1078,51 +1092,55 @@ function renderSettle(){
     el.innerHTML = `<div class="allset"><div class="em">🌴✅</div><div class="t1">¡Todo saldado!</div><div class="t2">Nadie le debe nada a nadie. Disfruten Margarita.</div></div>`;
     return;
   }
+
   const settled = DB.settled||{};
   const alerts  = DB.alerts||{};
   const me = ME;
 
-  const head = `<div class="settle-head">
-      <div class="top"><div class="big">${tx.length}</div><div class="lbl">${tx.length===1?'transferencia':'transferencias'} para quedar a mano</div></div>
-      <div class="rate">Mostrando en ${DB.displayCur==='Bs'?('Bs · tasa '+rateLabel(DB.bsMode)):DB.displayCur} · BCV ${nfp(DB.bcvUsd)} · € ${nfp(DB.bcvEur)} · Par ${nfp(DB.parUsd)}</div>
-    </div>`;
-
-  el.innerHTML = head + tx.map(t=>{
-    const key = txKey(t.from.key, t.to.key);
-    const isSettled = !!settled[key];
-    const hasAlert  = !!alerts[key];
-    const amPayer   = me && t.from.members.includes(me);
-    const amPayee   = me && t.to.members.includes(me);
-    const fromAv = avatarsFor(t.from.members), toAv = avatarsFor(t.to.members);
-    const bs = DB.displayCur!=='Bs' ? `<small>${fmt(t.amount/100,{cur:'Bs'})}</small>` : '';
+  // Construir la tarjeta de cada transferencia
+  function txCard(t){
+    const key      = txKey(t.from.key, t.to.key);
+    const isSettled= !!settled[key];
+    const hasAlert = !!alerts[key];
+    const amPayer  = me && t.from.members.includes(me);
+    const amPayee  = me && t.to.members.includes(me);
+    const admin    = isAdmin();
+    // Admin puede confirmar cualquier transferencia salvo la suya propia como pagador
+    const canConfirm = amPayee || (admin && !amPayer);
+    const fromAv   = avatarsFor(t.from.members), toAv = avatarsFor(t.to.members);
+    const bs       = DB.displayCur!=='Bs' ? `<small>${fmt(t.amount/100,{cur:'Bs'})}</small>` : '';
+    // Badge admin visible solo cuando no es parte directa del pago
+    const adminBadge = (admin && !amPayer && !amPayee)
+      ? `<span class="admin-badge">👑 Admin</span>` : '';
 
     let metaHtml = '';
     if(isSettled){
       const sd = settled[key];
       metaHtml = `<div class="tx-settled">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M20 6 9 17l-5-5"/></svg>
-        Pagado${sd.by?' · confirmado por '+disp(sd.by):''}${sd.at?' el '+new Date(sd.at).toLocaleDateString('es-VE',{day:'numeric',month:'short'}):''}
+        Pagado${sd.by?' · confirmado por '+disp(sd.by)+(ADMINS.has(sd.by)&&sd.by!==t.to.members[0]?' 👑':''):''}${sd.at?' el '+new Date(sd.at).toLocaleDateString('es-VE',{day:'numeric',month:'short'}):''}
       </div>
-      ${amPayee?`<button class="btn-unsettled" onclick="unsettle('${key}')">Desmarcar</button>`:''}`;
+      ${canConfirm?`<button class="btn-unsettled" onclick="unsettle('${key}')">Desmarcar</button>`:''}`;
     } else {
       if(hasAlert){
         metaHtml += `<div class="tx-alert"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M13 16h-1v-4h-1m1-4h.01M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10 10-4.5 10-10S17.5 2 12 2z"/></svg>${disp(t.from.label)} avisó que pagó</div>`;
       }
-      if(amPayee){
-        // cobrador: puede confirmar el pago
-        metaHtml += `<button class="btn-settle" onclick="markSettled('${key}')">✓ Confirmar recibido</button>`;
+      if(canConfirm){
+        const lbl = amPayee
+          ? '✓ Confirmar recibido'
+          : `✓ Confirmar que ${disp(t.to.label)} recibió`;
+        metaHtml += `${adminBadge}<button class="btn-settle" onclick="markSettled('${key}')">${lbl}</button>`;
         if(hasAlert) metaHtml += `<button class="notif-dismiss" style="padding:8px 12px;border-radius:10px;font-size:.8rem;font-weight:700" onclick="dismissAlert('${key}')">Ignorar aviso</button>`;
       } else if(amPayer){
-        // pagador: puede avisar que ya pagó
         metaHtml += hasAlert
-          ? `<span class="tx-pending">Aviso enviado · esperando confirmación del cobrador</span>`
+          ? `<span class="tx-pending">Aviso enviado · esperando confirmación</span>`
           : `<button class="btn-alert" onclick="sendAlert('${key}')">📨 Avisar que pagué</button>`;
       } else {
         metaHtml += `<span class="tx-pending">Pendiente</span>`;
       }
     }
 
-    return `<div class="tx-card" style="${isSettled?'opacity:.55':''}">
+    return `<div class="tx-card">
       <div class="tx-main">
         <div class="arrow">${fromAv}<span class="who">${t.from.label}</span>
           <span class="arr"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span>
@@ -1131,7 +1149,39 @@ function renderSettle(){
       </div>
       <div class="tx-meta">${metaHtml}</div>
     </div>`;
-  }).join('');
+  }
+
+  // Separar pendientes y saldados
+  const pending  = tx.filter(t => !settled[txKey(t.from.key, t.to.key)]);
+  const doneList = tx.filter(t =>  settled[txKey(t.from.key, t.to.key)]);
+
+  const rateInfo = `<div class="rate">Mostrando en ${DB.displayCur==='Bs'?('Bs · tasa '+rateLabel(DB.bsMode)):DB.displayCur} · BCV ${nfp(DB.bcvUsd)} · € ${nfp(DB.bcvEur)} · Par ${nfp(DB.parUsd)}</div>`;
+
+  // ── Sección pendientes ──
+  let html = `<div class="settle-head">
+    <div class="top">
+      <div class="big">${pending.length}</div>
+      <div class="lbl">${pending.length===1?'transferencia pendiente':'transferencias pendientes'}</div>
+    </div>
+    ${rateInfo}
+  </div>`;
+
+  if(pending.length===0){
+    html += `<div class="allset" style="padding:22px 20px"><div class="em">🎉</div><div class="t1" style="font-size:1.1rem">¡Todo pagado!</div><div class="t2">Todas las transferencias han sido confirmadas.</div></div>`;
+  } else {
+    html += `<div class="settle-section">${pending.map(txCard).join('')}</div>`;
+  }
+
+  // ── Sección saldados (solo si hay alguno) ──
+  if(doneList.length>0){
+    html += `<div class="settle-done-head">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="16" height="16"><path d="M20 6 9 17l-5-5"/></svg>
+      ${doneList.length} ${doneList.length===1?'transferencia saldada':'transferencias saldadas'}
+    </div>
+    <div class="settle-section settle-done">${doneList.map(txCard).join('')}</div>`;
+  }
+
+  el.innerHTML = html;
 }
 
 function markSettled(key){
@@ -1673,6 +1723,9 @@ function syncSettings(){
 /* ============ Identidad del usuario (local, no en Firebase) ============ */
 let ME = localStorage.getItem('margarita_me') || '';
 
+const ADMINS = new Set(['Samuel','Angela','Daniela','Ricardo']);
+const isAdmin = () => ADMINS.has(ME);
+
 function setMe(p){
   ME = p;
   localStorage.setItem('margarita_me', p);
@@ -1687,10 +1740,12 @@ function showWelcome(){
   const order = COUPLES.flatMap(c=>c.members).concat(SOLO);
   grid.innerHTML = order.map(p=>{
     const cp = coupleOf(p);
+    const adminMark = ADMINS.has(p) ? '<div class="wadmin">👑 Admin</div>' : '';
     return `<div class="wpick" onclick="setMe('${p}')">
       <div class="wav" style="background:${COLORS[p]}">${disp(p)[0]}</div>
       <div class="wname">${disp(p)}</div>
       <div class="wpair">${cp?coupleLabel(cp):'Solo'}</div>
+      ${adminMark}
     </div>`;
   }).join('');
   document.getElementById('welcomeScreen').style.display='flex';
@@ -1699,8 +1754,9 @@ function showWelcome(){
 function updateMeChip(){
   const chip = document.getElementById('meChip'); if(!chip) return;
   if(ME && COLORS[ME]){
-    chip.innerHTML = `<span class="av" style="background:${COLORS[ME]};width:26px;height:26px;font-size:.7rem">${disp(ME)[0]}</span> ${disp(ME)}`;
-    chip.title = 'Eres ' + disp(ME) + ' · toca para cambiar';
+    const adminMark = ADMINS.has(ME) ? ' 👑' : '';
+    chip.innerHTML = `<span class="av" style="background:${COLORS[ME]};width:26px;height:26px;font-size:.7rem">${disp(ME)[0]}</span> ${disp(ME)}${adminMark}`;
+    chip.title = 'Eres ' + disp(ME) + (ADMINS.has(ME)?' · Admin':'') + ' · toca para cambiar';
   } else {
     chip.innerHTML = `<span style="padding:0 4px">👤 ¿Quién eres?</span>`;
   }
