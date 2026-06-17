@@ -811,6 +811,47 @@ function save(){
   pushToFirebase();     // sincroniza con la nube
 }
 
+/* ============ Reconexión iOS (WebSocket muere en background) ============ */
+let _lastVisible = Date.now();
+
+function forceReconnect(){
+  if(!_fbDb) return;
+  // Decirle a Firebase que reconecte el WebSocket
+  try{ _fbDb.goOffline(); } catch(e){}
+  setTimeout(()=>{
+    try{
+      _fbDb.goOnline();
+      // Re-leer desde Firebase para asegurarnos de tener los datos más recientes
+      if(_fbRef) _fbRef.once('value').then(snap=>{
+        const data=snap.val();
+        if(data){ DB=applyDefaults(JSON.parse(data)); recalcRate(); syncSettings(); renderAll(); }
+      }).catch(()=>{});
+    }catch(e){}
+  }, 800);
+}
+
+document.addEventListener('visibilitychange', ()=>{
+  if(document.visibilityState==='visible'){
+    const away = Date.now() - _lastVisible;
+    // Si estuvo en background más de 15s, reconectar
+    if(away > 15000) forceReconnect();
+  } else {
+    _lastVisible = Date.now();
+  }
+});
+
+// iOS restaura páginas desde caché (bfcache) sin recargar — forzar sync
+window.addEventListener('pageshow', e=>{
+  if(e.persisted) forceReconnect();
+});
+
+// Detectar cuando la app vuelve al primer plano en iOS standalone
+window.addEventListener('focus', ()=>{
+  const away = Date.now() - _lastVisible;
+  if(away > 15000) forceReconnect();
+  _lastVisible = Date.now();
+});
+
 function saveLocal(){ try{ localStorage.setItem('margarita_v1', JSON.stringify(DB)); }catch(e){} }
 function loadLocal(){
   try{
@@ -878,7 +919,10 @@ function setStatus(s){
     offline:   { dot:'🔴', txt:'Sin conexión',   cls:'conn-offline'    },
   }[s]||{dot:'⚪',txt:'',cls:''};
   el.className='conn-pill '+cfg.cls;
-  el.innerHTML=`<span>${cfg.dot}</span> ${cfg.txt}`;
+  const retry = s==='offline'
+    ? ` <button onclick="forceReconnect();setStatus('connecting')" style="font-size:.7rem;font-weight:700;background:none;border:none;color:inherit;text-decoration:underline;cursor:pointer;padding:0">Reintentar</button>`
+    : '';
+  el.innerHTML=`<span>${cfg.dot}</span> ${cfg.txt}${retry}`;
 }
 
 let _id = 1;
