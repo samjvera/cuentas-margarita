@@ -27,8 +27,8 @@ input,select{font-family:inherit;font-size:1rem}
 .topbar{position:sticky;top:0;z-index:30;margin:0 -16px;padding:14px 16px 0;background:linear-gradient(180deg,var(--bg) 72%,rgba(250,246,239,0))}
 .brand{display:flex;align-items:center;gap:12px}
 .brand-mark{width:42px;height:42px;border-radius:13px;flex:none;position:relative;overflow:hidden;background:linear-gradient(160deg,#16C2B5 0%,#0B7E7A 60%);box-shadow:0 6px 16px rgba(11,126,122,.28)}
-.brand-mark::before{content:"";position:absolute;left:0;right:0;top:55%;bottom:0;background:linear-gradient(180deg,#0B7E7A,#0a5f5c)}
-.brand-mark::after{content:"";position:absolute;width:13px;height:13px;border-radius:50%;right:7px;top:7px;background:radial-gradient(circle at 35% 35%,#FFE7B8,#F6B64B);box-shadow:0 0 12px rgba(246,182,75,.8)}
+.brand-mark::before{content:"absolute";left:0;right:0;top:55%;bottom:0;background:linear-gradient(180deg,#0B7E7A,#0a5f5c)}
+.brand-mark::after{content:"absolute";width:13px;height:13px;border-radius:50%;right:7px;top:7px;background:radial-gradient(circle at 35% 35%,#FFE7B8,#F6B64B);box-shadow:0 0 12px rgba(246,182,75,.8)}
 .brand h1{font-family:'Fraunces',serif;font-weight:600;font-size:1.22rem;letter-spacing:-.01em;line-height:1.05}
 .brand .sub{font-size:.72rem;color:var(--muted);font-weight:500}
 .cur-toggle{margin-left:auto;display:flex;background:var(--surface);border:1px solid var(--line);border-radius:999px;padding:3px;box-shadow:var(--shadow);flex:none}
@@ -956,9 +956,9 @@ function computeBalances(){
   const settled = DB.settled||{};
   for(const [key, sd] of Object.entries(settled)){
     if(!sd || !sd.amt || !sd.from || !sd.to) continue;
-    // Solo procesar keys de modo 'indiv' para no doble-contar
-    if(!key.endsWith('__indiv')) continue;
-    // Convertir monto nativo a USD
+    // Usamos includes en vez de endsWith para leer las transacciones históricas
+    if(!key.includes('__indiv')) continue;
+    
     const amtUsd = sd.cur==='Bs' ? sd.amt/100/(DB.bcvUsd||1) : sd.amt/100;
     const amtC = Math.round(amtUsd*100);
     const fromP = sd.from, toP = sd.to;
@@ -1016,11 +1016,46 @@ function computeSettlements(mode){
       for(const p in sh) if(owes[p]!==undefined) owes[p]+=sh[p];
     }
     const entityBals=entities.map(e=>({...e,net:e.members.reduce((s,m)=>s+(paid[m]||0)-(owes[m]||0),0)}));
-    for(const t of settleGroup(entityBals.map(b=>({...b})))){
-      const key=txKey(t.from.key,t.to.key,grp,mode);
-      // Se considera saldado si el key propio está saldado (eliminamos el chequeo cruzado aquí para evitar falsos positivos)
-      const isSett = !!settled[key];
-      allTx.push({...t,payType:grp,cur:grp,key,isSettled:isSett});
+    
+    // --- 1. Descontar las transacciones que YA están saldadas ---
+    const grpSettledKeys = Object.keys(settled).filter(k => k.includes(`__${grp}__${mode}`));
+    for(const key of grpSettledKeys){
+      const sd = settled[key];
+      if(!sd || sd.cur!==grp) continue;
+      
+      const fromEnt = entities.find(e => mode==='pareja' ? e.key===sd.from : e.members.includes(sd.from)) || entities.find(e=>e.members.includes(sd.from));
+      const toEnt = entities.find(e => mode==='pareja' ? e.key===sd.to : e.members.includes(sd.to)) || entities.find(e=>e.members.includes(sd.to));
+      
+      if(fromEnt && toEnt){
+        // Si ya te pagaron, tu balance baja. Si ya pagaste, tu balance sube.
+        fromEnt.net += sd.amt;
+        toEnt.net -= sd.amt;
+        // Lo empujamos directo a la lista final como liquidado e intocable
+        allTx.push({
+          from: fromEnt,
+          to: toEnt,
+          amount: sd.amt,
+          payType: grp,
+          cur: grp,
+          key: key,
+          isSettled: true
+        });
+      }
+    }
+    
+    // --- 2. Calcular nuevas rutas solo con la deuda RESTANTE ---
+    const pendingTx = settleGroup(entityBals.map(b=>({...b})));
+    let suffixCounter = 1;
+    for(const t of pendingTx){
+      let key = txKey(t.from.key, t.to.key, grp, mode);
+      
+      // Si ya existía un pago viejo entre estas dos personas, le agregamos un sufijo 
+      // para que el historial viejo no se borre cuando confirmen la nueva deuda.
+      while(settled[key]) {
+         key = txKey(t.from.key, t.to.key, grp, mode) + '__p' + suffixCounter;
+         suffixCounter++;
+      }
+      allTx.push({...t, payType:grp, cur:grp, key, isSettled:false});
     }
   }
   return allTx;
@@ -1308,17 +1343,20 @@ function crossKeys(key){
   if(parts.length<4) return [];
   const [a, b, cur, mode] = parts;
   
+  // Capturar sufijo de historial si existe (ej. __p1)
+  const suffix = parts.length > 4 ? '__' + parts.slice(4).join('__') : '';
+  
   if(mode==='pareja'){
-    // pareja → los indiv de cada combinación miembro-a × miembro-b
+    // pareja → indiv
     const membersA = COUPLES.find(c=>c.id===a)?.members || (PEOPLE.includes(a)?[a]:[]);
     const membersB = COUPLES.find(c=>c.id===b)?.members || (PEOPLE.includes(b)?[b]:[]);
     const keys=[];
     for(const ma of membersA)
       for(const mb of membersB)
-        keys.push(txKey(ma,mb,cur,'indiv'));
+        keys.push(txKey(ma,mb,cur,'indiv') + suffix);
     return keys;
   } else {
-    // indiv → no propagar hacia la pareja (comportamiento unidireccional)
+    // indiv → no propagar hacia la pareja
     return [];
   }
 }
