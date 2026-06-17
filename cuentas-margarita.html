@@ -344,7 +344,6 @@ input,select{font-family:inherit;font-size:1rem}
 </style>
 </head>
 <body>
-<!-- Pantalla de carga mientras conecta Firebase -->
 <div id="loadingScreen" style="position:fixed;inset:0;z-index:999;background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px">
   <div style="width:52px;height:52px;border-radius:16px;background:linear-gradient(160deg,#16C2B5,#0B7E7A);box-shadow:0 8px 24px rgba(11,126,122,.3);display:flex;align-items:center;justify-content:center;font-size:1.6rem">🏝️</div>
   <div style="font-family:'Fraunces',serif;font-size:1.4rem;font-weight:600;color:var(--ink)">Cuentas de Margarita</div>
@@ -354,7 +353,6 @@ input,select{font-family:inherit;font-size:1rem}
   </div>
 </div>
 
-<!-- Pantalla de bienvenida: ¿quién eres? -->
 <div id="welcomeScreen" class="welcome" style="display:none">
   <div class="welcome-logo">🏝️</div>
   <h2>Cuentas de Margarita</h2>
@@ -380,7 +378,6 @@ input,select{font-family:inherit;font-size:1rem}
     <div id="connStatus" class="conn-pill conn-connecting"><span>🟡</span> Conectando…</div>
   </div>
 
-  <!-- ===== RESUMEN ===== -->
   <section id="v-resumen" class="view on">
     <div id="notifBanners"></div>
     <div class="hero">
@@ -402,7 +399,6 @@ input,select{font-family:inherit;font-size:1rem}
     <div class="card" id="paidRanking"></div>
   </section>
 
-  <!-- ===== GASTOS ===== -->
   <section id="v-gastos" class="view">
     <div class="sec-title">Todos los gastos</div>
     <div class="tools">
@@ -416,7 +412,6 @@ input,select{font-family:inherit;font-size:1rem}
     <div class="card" id="expList"></div>
   </section>
 
-  <!-- ===== BALANCES ===== -->
   <section id="v-balances" class="view">
     <div class="sec-title">Balances</div>
     <div class="seg" role="group" aria-label="Modo de balance">
@@ -427,7 +422,6 @@ input,select{font-family:inherit;font-size:1rem}
     <div class="card" id="balList"></div>
   </section>
 
-  <!-- ===== LIQUIDAR ===== -->
   <section id="v-liquidar" class="view">
     <div class="sec-title">Liquidación</div>
     <div class="seg" role="group" aria-label="Modo de liquidación">
@@ -438,7 +432,6 @@ input,select{font-family:inherit;font-size:1rem}
     <div class="card" id="settleList"></div>
   </section>
 
-  <!-- ===== AJUSTES ===== -->
   <section id="v-ajustes" class="view">
     <div class="sec-title">Ajustes</div>
     <div class="card">
@@ -533,7 +526,6 @@ input,select{font-family:inherit;font-size:1rem}
   </div>
 </nav>
 
-<!-- ===== Modal: gasto ===== -->
 <div class="scrim" id="scrim" onclick="if(event.target===this)closeForm()">
   <div class="modal" role="dialog" aria-modal="true" aria-labelledby="formTitle">
     <div class="grabber"></div>
@@ -568,8 +560,7 @@ input,select{font-family:inherit;font-size:1rem}
         <div class="amt-group">
           <input id="fAmount" class="txtin" type="number" inputmode="decimal" step="0.01" min="0" placeholder="0.00" oninput="onAmountChange()">
           <div class="ccy" id="ccyPick">
-            <!-- Se llena dinámicamente según el tipo de pago -->
-          </div>
+            </div>
         </div>
         <div class="hint" id="amountNote" style="margin-top:7px;margin-bottom:0"></div>
       </div>
@@ -620,7 +611,6 @@ input,select{font-family:inherit;font-size:1rem}
 
 <div class="toast" id="toast"></div>
 
-<!-- ===== Modal: categoría ===== -->
 <div class="scrim" id="catScrim" onclick="if(event.target===this)closeCatModal()">
   <div class="modal" role="dialog" aria-modal="true" aria-labelledby="catTitle" style="max-width:460px">
     <div class="grabber"></div>
@@ -1028,9 +1018,9 @@ function computeSettlements(mode){
     const entityBals=entities.map(e=>({...e,net:e.members.reduce((s,m)=>s+(paid[m]||0)-(owes[m]||0),0)}));
     for(const t of settleGroup(entityBals.map(b=>({...b})))){
       const key=txKey(t.from.key,t.to.key,grp,mode);
-      // Se considera saldado si el key propio está saldado O alguno de sus equivalentes
-      const isSett = !!settled[key] || crossKeys(key).some(k=>!!settled[k]);
-      allTx.push({...t,payType:grp,key,isSettled:isSett});
+      // Se considera saldado si el key propio está saldado (eliminamos el chequeo cruzado aquí para evitar falsos positivos)
+      const isSett = !!settled[key];
+      allTx.push({...t,payType:grp,cur:grp,key,isSettled:isSett});
     }
   }
   return allTx;
@@ -1317,6 +1307,7 @@ function crossKeys(key){
   const parts = key.split('__');
   if(parts.length<4) return [];
   const [a, b, cur, mode] = parts;
+  
   if(mode==='pareja'){
     // pareja → los indiv de cada combinación miembro-a × miembro-b
     const membersA = COUPLES.find(c=>c.id===a)?.members || (PEOPLE.includes(a)?[a]:[]);
@@ -1327,13 +1318,8 @@ function crossKeys(key){
         keys.push(txKey(ma,mb,cur,'indiv'));
     return keys;
   } else {
-    // indiv → solo el key de pareja si ambos pertenecen a parejas distintas
-    const coupleA = COUPLES.find(c=>c.members.includes(a));
-    const coupleB = COUPLES.find(c=>c.members.includes(b));
-    const keyA = coupleA ? coupleA.id : a;
-    const keyB = coupleB ? coupleB.id : b;
-    if(keyA===keyB) return []; // misma pareja, no hay cross-key
-    return [txKey(keyA,keyB,cur,'pareja')];
+    // indiv → no propagar hacia la pareja (comportamiento unidireccional)
+    return [];
   }
 }
 
