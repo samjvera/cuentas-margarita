@@ -334,6 +334,13 @@ input,select{font-family:inherit;font-size:1rem}
 .btn-alert:hover{background:#ffd5c8}
 .btn-unsettled{padding:8px 14px;border-radius:10px;font-size:.8rem;font-weight:700;background:var(--neg-soft);color:var(--neg);transition:.15s}
 
+.micard{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:16px;margin-bottom:12px;box-shadow:var(--shadow)}
+.micard-title{font-size:.72rem;font-weight:800;color:var(--muted);letter-spacing:.06em;margin-bottom:10px}
+.mirow{display:flex;justify-content:space-between;align-items:center;padding:5px 0;font-size:.86rem}
+.milbl{color:var(--ink-soft)}
+.mival{font-weight:700}
+.micat-row{display:flex;align-items:center;gap:10px;padding:11px 14px;border-bottom:1px solid var(--line)}
+.micat-e{font-size:1.3rem;flex:none}
 .bal-sec-head{font-size:.78rem;font-weight:800;color:var(--ink-soft);padding:10px 14px 6px;letter-spacing:.02em;border-bottom:1px solid var(--line)}
 .bal-allgood{font-size:.8rem;color:var(--pos);padding:10px 14px;font-weight:600}
 .bal-group-head{display:flex;justify-content:space-between;align-items:center;padding:8px 14px;font-size:.76rem;font-weight:700;background:var(--surface);border-bottom:1px solid var(--line)}
@@ -384,7 +391,7 @@ input,select{font-family:inherit;font-size:1rem}
         <h1>Cuentas de Margarita</h1>
         <div class="sub">Gastos del viaje · 11 viajeros</div>
       </div>
-      <button class="me-chip" id="meChip" onclick="showWelcome()" title="Cambiar usuario"></button>
+      <button class="me-chip" id="meChip" onclick="go('mi-resumen')" title="Mi resumen"></button>
       <div class="cur-toggle" role="group" aria-label="Moneda de visualización">
         <button id="curUSD" class="on" onclick="setDisplayCur('USD')">$</button>
         <button id="curEUR" onclick="setDisplayCur('EUR')">€</button>
@@ -523,7 +530,7 @@ input,select{font-family:inherit;font-size:1rem}
       <div style="font-size:.82rem;color:var(--muted);margin-bottom:12px">5 parejas y 1 solo. Las parejas se consolidan en la vista “Por pareja”.</div>
       <div class="people-grid" id="peopleRef"></div>
     </div>
-    <div style="text-align:center;color:var(--muted);font-size:.74rem;margin-top:22px;padding-bottom:8px">Hecho para el viaje a Isla de Margarita 🏝️ · Funciona sin conexión<br><span style="font-weight:700;letter-spacing:.04em">v1.0</span></div>
+    <div style="text-align:center;color:var(--muted);font-size:.74rem;margin-top:22px;padding-bottom:8px">Hecho para el viaje a Isla de Margarita 🏝️ · Funciona sin conexión<br><span style="font-weight:700;letter-spacing:.04em">v1.0.1</span></div>
   </section>
 </div>
 
@@ -547,7 +554,14 @@ input,select{font-family:inherit;font-size:1rem}
   </div>
 </nav>
 
-<!-- ===== Modal: gasto ===== -->
+  <!-- ===== MI RESUMEN ===== -->
+  <section id="v-mi-resumen" class="view">
+    <div class="sec-title" id="miResumenTitle">Mi resumen</div>
+    <div id="miResumenContent"></div>
+    <div style="margin-top:12px">
+      <button class="btn btn-ghost" style="width:100%" onclick="showWelcome()">Cambiar usuario</button>
+    </div>
+  </section>
 <div class="scrim" id="scrim" onclick="if(event.target===this)closeForm()">
   <div class="modal" role="dialog" aria-modal="true" aria-labelledby="formTitle">
     <div class="grabber"></div>
@@ -578,7 +592,7 @@ input,select{font-family:inherit;font-size:1rem}
         </div>
       </div>
       <div class="fl">
-        <label id="amountLabel">Monto</label>
+        <label id="amountLabel">Monto real del gasto</label>
         <div class="amt-group">
           <input id="fAmount" class="txtin" type="number" inputmode="decimal" step="0.01" min="0" placeholder="0.00" oninput="onAmountChange()">
           <div class="ccy" id="ccyPick">
@@ -586,6 +600,19 @@ input,select{font-family:inherit;font-size:1rem}
           </div>
         </div>
         <div class="hint" id="amountNote" style="margin-top:7px;margin-bottom:0"></div>
+      </div>
+      <div class="fl" id="roundFl">
+        <label style="display:flex;align-items:center;gap:8px">
+          <input type="checkbox" id="useRound" onchange="toggleRound()" style="width:16px;height:16px;accent-color:var(--sea)">
+          Redondear total (diferencia va al 🪙 Pote)
+        </label>
+        <div id="roundFields" style="display:none;margin-top:10px">
+          <div class="amt-group">
+            <input id="fRound" class="txtin" type="number" inputmode="decimal" step="0.01" min="0" placeholder="0.00" oninput="onRoundChange()" style="font-size:1.1rem">
+            <span style="display:flex;align-items:center;padding:0 10px;font-size:.82rem;color:var(--muted);font-weight:600">total cobrado</span>
+          </div>
+          <div class="splitnote" id="roundNote"></div>
+        </div>
       </div>
       <div class="fl" id="rateTypeFl">
         <label>Tasa de referencia (Bs)</label>
@@ -1607,7 +1634,7 @@ function dismissAlert(key){
 
 /* ============ Formulario de gasto ============ */
 let editingId = null;
-let form = {payType:'USD', inputCur:'USD', cur:'USD', cat:'', payers:{Angela:''}, mode:'equal', parts:new Set(PEOPLE), exact:{}, rateType:'bcv'};
+let form = {payType:'USD', inputCur:'USD', cur:'USD', cat:'', payers:{Angela:''}, mode:'equal', parts:new Set(PEOPLE.filter(p=>!VIRTUAL.has(p))), exact:{}, rateType:'bcv'};
 
 function buildCatPick(){
   let html = '';
@@ -1621,7 +1648,8 @@ function applyCatHighlight(){ document.querySelectorAll('#catPick button[data-ca
 function setCat(k){ form.cat=k; applyCatHighlight(); }
 
 function buildPayerPick(){
-  const groups = COUPLES.map(c=>({title:coupleLabel(c),members:c.members})).concat([{title:'Sin pareja',members:SOLO}]);
+  const groups = COUPLES.map(c=>({title:coupleLabel(c),members:c.members}))
+    .concat([{title:'Sin pareja',members:SOLO.filter(p=>!VIRTUAL.has(p))}]);
   document.getElementById('payerPick').innerHTML = groups.map(g=>
     `<div class="coupleblock"><div class="ctitle">${g.title}</div><div class="partgrid">`+
     g.members.map(p=>{
@@ -1631,19 +1659,60 @@ function buildPayerPick(){
         ${avatar(p)}<span>${disp(p)}</span>
         <input class="exact" type="number" inputmode="decimal" step="0.01" min="0" placeholder="0.00"
           value="${val}" oninput="onPayerInput('${p}',this.value)"
+          onfocus="activatePayer('${p}')"
           ${on?'':'disabled style=opacity:.4'}>
       </div>`;
     }).join('')+`</div></div>`
   ).join('');
   updatePayerNote();
 }
+// Activa un pagador al hacer foco en su input (aunque estuviera desactivado)
+function activatePayer(p){
+  if(!(p in form.payers)){
+    form.payers[p]='';
+    buildPayerPick();
+    // Restaurar foco al input recién activado
+    setTimeout(()=>{ const el=document.querySelector(`#pyr_${p} .exact`); if(el) el.focus(); },50);
+  }
+  validateForm();
+}
 function togglePayer(ev, p){
-  if(ev.target.classList.contains('exact')) return;
+  // Si el click fue directamente en el input y la persona ya está activa, no hacer nada
+  if(ev.target.classList.contains('exact') && p in form.payers) return;
   if(p in form.payers){ delete form.payers[p]; }
   else { form.payers[p] = ''; }
   buildPayerPick(); validateForm();
 }
 function onPayerInput(p,v){ form.payers[p]=v; updatePayerNote(); validateForm(); }
+function toggleRound(){
+  const on = document.getElementById('useRound').checked;
+  document.getElementById('roundFields').style.display = on ? '' : 'none';
+  if(on){
+    const amt = parseFloat(document.getElementById('fAmount').value)||0;
+    const rounded = amt>0 ? Math.ceil(amt/10)*10 : '';
+    document.getElementById('fRound').value = rounded||'';
+    onRoundChange();
+  }
+  validateForm();
+}
+function onRoundChange(){
+  const real  = parseFloat(document.getElementById('fAmount').value)||0;
+  const total = parseFloat(document.getElementById('fRound').value)||0;
+  const note  = document.getElementById('roundNote');
+  if(!note) return;
+  if(total<=0){ note.innerHTML=''; return; }
+  const diff = Math.round((total-real)*100)/100;
+  const sym  = form.payType==='Bs'?'Bs ':'$';
+  const n    = [...form.parts].filter(p=>!VIRTUAL.has(p)).length || 1;
+  if(diff<-0.001){
+    note.innerHTML=`<span class="warn">El total cobrado no puede ser menor al gasto real.</span>`;
+  } else if(Math.abs(diff)<0.001){
+    note.innerHTML=`<span class="warn">Sin diferencia — no hace falta el redondeo.</span>`;
+  } else {
+    note.innerHTML=`<span class="ok">🪙 Pote recibe crédito de <b>${sym}${nfp(diff)}</b> · cada uno paga <b>${sym}${nfp(total/n)}</b> exactos</span>`;
+  }
+  validateForm();
+}
 function payerSplitEqual(){
   const ps = Object.keys(form.payers); if(!ps.length) return;
   const amt = parseFloat(document.getElementById('fAmount').value)||0;
@@ -1691,7 +1760,7 @@ function togglePart(p){
 }
 function togglePartExact(ev,p){ if(ev.target.classList.contains('exact')) return; togglePart(p); buildPartList(); }
 function onExactInput(p,v){ form.exact[p]=v; updateSplitNote(); validateForm(); }
-function selectAllParts(){ PEOPLE.forEach(p=>form.parts.add(p)); buildPartList(); updateSplitNote(); validateForm(); }
+function selectAllParts(){ PEOPLE.filter(p=>!VIRTUAL.has(p)).forEach(p=>form.parts.add(p)); buildPartList(); updateSplitNote(); validateForm(); }
 function clearParts(){ form.parts.clear(); buildPartList(); updateSplitNote(); validateForm(); }
 function setSplitMode(m){
   form.mode=m;
@@ -1786,7 +1855,10 @@ function openForm(){
   document.getElementById('fDate').value=new Date().toISOString().slice(0,10);
   const defPt=DB.defaultPayType||'USD';
   form={payType:defPt,inputCur:defPt==='Bs'?'Bs':'USD',rateType:DB.bsMode,
-        cur:defPt,cat:firstCatId(),payers:{Angela:''},mode:'equal',parts:new Set(PEOPLE),exact:{}};
+        cur:defPt,cat:firstCatId(),payers:{Angela:''},mode:'equal',parts:new Set(PEOPLE.filter(p=>!VIRTUAL.has(p))),exact:{}};
+  const ur=document.getElementById('useRound'); if(ur){ ur.checked=false; }
+  const rf=document.getElementById('roundFields'); if(rf){ rf.style.display='none'; }
+  const frEl=document.getElementById('fRound'); if(frEl){ frEl.value=''; }
   setPayType(form.payType); buildPayerPick(); setSplitMode('equal');
   showScrim();
 }
@@ -1821,33 +1893,41 @@ function saveExpense(){
   const parts=[...form.parts];
   const exact={}; if(form.mode==='exact') parts.forEach(p=>exact[p]=parseFloat(form.exact[p])||0);
   // Tasa de referencia: usar la tasa de la fecha del gasto si está en el histórico
-  const dateRates = rateForDate(date);
-  const repayRate = form.payType==='Bs'
+  // Redondeo: si está activo, el total cobrado es mayor al gasto real
+  // La diferencia se acredita al Pote como pagador
+  const useRound = document.getElementById('useRound')?.checked;
+  const roundTotal = useRound ? (parseFloat(document.getElementById('fRound').value)||0) : 0;
+  const totalAmt = (useRound && roundTotal > rawAmt) ? roundTotal : rawAmt;
+  const poteDiff = Math.round((totalAmt - rawAmt)*100)/100;
+  const dateRates  = rateForDate(date);
+  const repayRate  = form.payType==='Bs'
     ? (form.rateType==='par' ? (dateRates.parUsd||dateRates.bcvUsd) : dateRates.bcvUsd)
     : null;
-  const rateDate = date || '';
-  // Monto nativo: para Bs convertir según la inputCur usando las tasas de esa fecha
-  const nativeAmt = form.payType==='Bs' ? toNativeWithRates(rawAmt, form.inputCur, dateRates) : rawAmt;
+  const rateDate   = date || '';
+  // Monto nativo del gasto real y del total cobrado (con redondeo)
+  const nativeAmt  = form.payType==='Bs' ? toNativeWithRates(rawAmt,   form.inputCur, dateRates) : rawAmt;
+  const nativeTotal= form.payType==='Bs' ? toNativeWithRates(totalAmt, form.inputCur, dateRates) : totalAmt;
+  const nativeDiff = Math.round((nativeTotal-nativeAmt)*100)/100;
   const payers=Object.assign({},form.payers);
   const ps=Object.keys(payers);
   if(ps.length===1&&!(parseFloat(payers[ps[0]])>0)){
-    // Un solo pagador sin monto → asignar el total nativo
     payers[ps[0]]=nativeAmt;
   } else {
     ps.forEach(p=>{
       const raw=parseFloat(payers[p])||0;
-      // Si el gasto es en Bs y el usuario ingresó en otra referencia, convertir
-      payers[p] = form.payType==='Bs' ? toNativeWithRates(raw, form.inputCur, dateRates) : raw;
+      payers[p]=form.payType==='Bs' ? toNativeWithRates(raw, form.inputCur, dateRates) : raw;
     });
   }
+  // Si hay redondeo, acreditar la diferencia al Pote
+  if(nativeDiff>0.001) payers['Pote']=(payers['Pote']||0)+nativeDiff;
   if(editingId){
     Object.assign(DB.expenses.find(x=>x.id===editingId),{
-      desc,amount:nativeAmt,payType:form.payType,inputCur:form.inputCur,cur:form.payType,
+      desc,amount:nativeTotal,payType:form.payType,inputCur:form.inputCur,cur:form.payType,
       repayRate,rateDate:(DB.ratesDate||''),cat:form.cat,payers,mode:form.mode,parts,exact,date
     });
     toast('Gasto actualizado');
   } else {
-    DB.expenses.push(mk(desc,form.cat,nativeAmt,form.payType,form.inputCur,
+    DB.expenses.push(mk(desc,form.cat,nativeTotal,form.payType,form.inputCur,
       repayRate,DB.ratesDate||'',payers,parts,form.mode,exact,date));
     toast('Gasto agregado ✓');
   }
@@ -2114,7 +2194,8 @@ function go(v){
   document.getElementById('v-'+v).classList.add('on');
   document.querySelectorAll('.tab').forEach(t=>t.classList.toggle('on',t.dataset.v===v));
   window.scrollTo({top:0,behavior:'smooth'});
-  document.getElementById('fab').style.display = (v==='ajustes')?'none':'flex';
+  document.getElementById('fab').style.display = (v==='ajustes'||v==='mi-resumen')?'none':'flex';
+  if(v==='mi-resumen') renderMiResumen();
 }
 let toastT;
 function toast(msg){ const t=document.getElementById('toast'); t.textContent=msg; t.classList.add('on'); clearTimeout(toastT); toastT=setTimeout(()=>t.classList.remove('on'),2200); }
@@ -2216,7 +2297,178 @@ function renderNotifs(){
   }).join('');
 }
 
-function renderAll(){ renderResumen(); renderCatFilter(); renderExpenses(); renderBalances(); renderSettle(); renderNotifs(); renderRateHistory(); }
+function renderAll(){ renderResumen(); renderCatFilter(); renderExpenses(); renderBalances(); renderSettle(); renderNotifs(); renderRateHistory(); renderMiResumen(); }
+
+function renderMiResumen(){
+  const el=document.getElementById('miResumenContent'); if(!el) return;
+  const title=document.getElementById('miResumenTitle');
+  if(!ME||!COLORS[ME]){
+    if(title) title.textContent='Mi resumen';
+    el.innerHTML=`<div class="empty"><div class="em">👤</div><div class="t1">¿Quién eres?</div><div class="t2">Identifícate para ver tu resumen personal.</div></div>`;
+    return;
+  }
+  if(title) title.textContent=`Resumen · ${disp(ME)}`;
+
+  // ── Calcular las 3 métricas por moneda ──
+  let paidUSD=0, paidBs=0;   // Lo que PAGUÉ (puse de mi bolsillo)
+  let myPartUSD=0, myPartBs=0; // Lo que me CORRESPONDE (mi consumo)
+
+  // Por categoría: cuánto me corresponde (consumí)
+  const byCatUSD={}, byCatBs={};
+
+  for(const e of DB.expenses){
+    const pt=e.payType||'USD', rr=e.repayRate||0;
+    // Lo que pagué en este gasto
+    if(e.payers && ME in e.payers){
+      const amt=parseFloat(e.payers[ME])||0;
+      if(pt==='Bs') paidBs+=amt;
+      else           paidUSD+=toUSD(amt,pt,rr);
+    }
+    // Lo que me corresponde (mi share)
+    const shBs  = expenseShares(e);
+    const shUSD = expenseSharesUSD(e);
+    if(pt==='Bs'){
+      const s=(shBs[ME]||0)/100;
+      myPartBs+=s;
+      byCatBs[e.cat]=(byCatBs[e.cat]||0)+s;
+    } else {
+      const s=(shUSD[ME]||0)/100;
+      myPartUSD+=s;
+      byCatUSD[e.cat]=(byCatUSD[e.cat]||0)+s;
+    }
+  }
+
+  // Balance neto ajustado (lo que pagué vs lo que consumí, descontando saldados)
+  const {netUSD,netBs}=computeNetAdjusted();
+  const myNetUSD=(netUSD[ME]||0)/100;
+  const myNetBs =(netBs[ME] ||0)/100;
+  const hasBsExpenses=DB.expenses.some(e=>(e.payType||'USD')==='Bs');
+
+  // ── Sección 1: Las 3 métricas ──
+  const sym=(pt)=>pt==='Bs'?'Bs ':'$';
+
+  function metricCard(currency, paid, myPart, myNet){
+    const s=currency==='Bs'?'Bs ':'$';
+    const netColor=myNet>0.01?'var(--pos)':myNet<-0.01?'var(--neg)':'var(--muted)';
+    const netLabel=myNet>0.01?`me deben ${s}${nfp(Math.abs(myNet))}`:
+                   myNet<-0.01?`debo ${s}${nfp(Math.abs(myNet))}`:
+                   '✓ saldado';
+    // Para Bs: mostrar equivalente en USD usando tasa activa
+    const bsRate = DB.bcvUsd||1;
+    const usdRef = (v) => currency==='Bs'
+      ? ` <span style="font-size:.72rem;color:var(--muted);font-weight:500">(≈ $${nfp(v/bsRate)})</span>`
+      : '';
+    return `<div class="micard">
+      <div class="micard-title">${currency==='Bs'?'🇻🇪 Bolívares':'💵 Dólares'}</div>
+      <div class="mirow">
+        <span class="milbl">Lo que pagué</span>
+        <span class="mival" style="color:var(--ink)">${s}${nfp(paid)}${usdRef(paid)}</span>
+      </div>
+      <div class="mirow">
+        <span class="milbl">Lo que gasté (me corresponde)</span>
+        <span class="mival" style="color:var(--neg)">${s}${nfp(myPart)}${usdRef(myPart)}</span>
+      </div>
+      <div class="mirow" style="border-top:1px solid var(--line);padding-top:8px;margin-top:4px">
+        <span class="milbl" style="font-weight:700">Balance</span>
+        <span class="mival" style="font-weight:800;color:${netColor}">${netLabel}${usdRef(Math.abs(myNet))}</span>
+      </div>
+    </div>`;
+  }
+
+  let html=metricCard('USD',paidUSD,myPartUSD,myNetUSD);
+  if(hasBsExpenses) html+=metricCard('Bs',paidBs,myPartBs,myNetBs);
+
+  // ── Sección 2: Lo que gasté por categoría ──
+  const cats=DB.categories||[];
+  const catM=catMap();
+
+  function catSection(currency, byCat){
+    const entries=Object.entries(byCat).filter(([,v])=>v>0.001)
+      .sort((a,b)=>b[1]-a[1]);
+    if(!entries.length) return '';
+    const s=currency==='Bs'?'Bs ':'$';
+    const total=entries.reduce((sum,[,v])=>sum+v,0);
+    const rows=entries.map(([catId,v])=>{
+      const cat=catM[catId]||{e:'🏷️',label:'Sin categoría'};
+      const pct=total>0?Math.round(v/total*100):0;
+      return `<div class="micat-row">
+        <span class="micat-e">${cat.e}</span>
+        <div style="flex:1;min-width:0">
+          <div style="font-size:.84rem;font-weight:600">${cat.label||'Sin categoría'}</div>
+          <div style="height:5px;background:var(--line);border-radius:99px;margin-top:4px">
+            <div style="height:5px;width:${pct}%;background:var(--sea);border-radius:99px;transition:.3s"></div>
+          </div>
+        </div>
+        <div style="text-align:right;flex:none;margin-left:10px">
+          <div style="font-weight:800;font-size:.88rem">${s}${nfp(v)}</div>
+          <div style="font-size:.7rem;color:var(--muted)">${pct}%</div>
+        </div>
+      </div>`;
+    }).join('');
+    return `<div class="sec-title" style="margin-top:4px">Lo que gasté${currency==='Bs'?' · Bs':' · USD'} por categoría</div>
+    <div class="card">${rows}</div>`;
+  }
+
+  html+=catSection('USD',byCatUSD);
+  if(hasBsExpenses) html+=catSection('Bs',byCatBs);
+
+  // ── Sección 3: Transferencias que me afectan ──
+  const allTx=computeSettlements('indiv');
+  const myPending=allTx.filter(t=>!t.isSettled&&(t.from.key===ME||t.to.key===ME));
+
+  if(myPending.length>0){
+    html+=`<div class="sec-title" style="margin-top:4px">Pendiente</div><div class="card">`;
+    html+=myPending.map(t=>{
+      const iFrom=t.from.key===ME;
+      const other=iFrom?disp(t.to.label):disp(t.from.label);
+      const otherKey=iFrom?t.to.key:t.from.key;
+      const s=t.payType==='Bs'?'Bs ':'$';
+      const color=iFrom?'var(--neg)':'var(--pos)';
+      const label=iFrom?`Le debo a ${other}`:`${other} me debe`;
+      return `<div class="balrow">
+        ${avatar(otherKey)}
+        <div style="min-width:0"><div class="balname">${label}</div></div>
+        <div class="balamt"><div class="n" style="color:${color};font-weight:800">${s}${nfp(t.amount/100)}</div></div>
+      </div>`;
+    }).join('');
+    html+=`</div>`;
+  } else if(DB.expenses.length>0){
+    html+=`<div class="card card-pad" style="text-align:center;color:var(--pos);font-weight:700;margin-bottom:14px">✓ Todo saldado</div>`;
+  }
+
+  // ── Sección 4: Mis gastos recientes ──
+  const myExp=DB.expenses.filter(e=>(e.payers&&ME in e.payers)||(e.parts&&e.parts.includes(ME)));
+  if(myExp.length>0){
+    html+=`<div class="sec-title" style="margin-top:4px">Mis gastos (${myExp.length})</div><div class="card">`;
+    html+=[...myExp].reverse().map(e=>{
+      const pt=e.payType||'USD',rr=e.repayRate||0;
+      const iAmPayer=e.payers&&ME in e.payers;
+      const myShare=pt==='Bs'?(expenseShares(e)[ME]||0)/100:(expenseSharesUSD(e)[ME]||0)/100;
+      const iPaid=iAmPayer?(parseFloat(e.payers[ME])||0):0;
+      const dateStr=e.date?new Date(e.date+'T00:00').toLocaleDateString('es-VE',{day:'numeric',month:'short'}):'';
+      const s=pt==='Bs'?'Bs ':'$';
+      const net=iPaid-myShare;
+      const netColor=net>0.01?'var(--pos)':net<-0.01?'var(--neg)':'var(--muted)';
+      return `<div style="display:flex;align-items:center;gap:10px;padding:11px 14px;border-bottom:1px solid var(--line)">
+        <span style="font-size:1.2rem">${getCat(e.cat).e}</span>
+        <div style="flex:1;min-width:0">
+          <div style="font-weight:700;font-size:.86rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${escapeHtml(e.desc)}</div>
+          <div style="font-size:.71rem;color:var(--muted);margin-top:1px">
+            ${dateStr}
+            ${iAmPayer&&iPaid>0?` · <span style="color:var(--pos)">pagué ${s}${nfp(iPaid)}</span>`:''}
+            ${myShare>0?` · me toca ${s}${nfp(myShare)}`:''}
+          </div>
+        </div>
+        <div style="font-weight:800;font-size:.88rem;color:${netColor};flex:none;margin-left:6px">
+          ${Math.abs(net)>0.01?(net>0?'+':'')+s+nfp(net):'–'}
+        </div>
+      </div>`;
+    }).join('');
+    html+=`</div>`;
+  }
+
+  el.innerHTML=html;
+}
 
 /* ============ Init ============ */
 (function init(){
