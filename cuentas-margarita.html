@@ -27,18 +27,19 @@
 }
 *{box-sizing:border-box;margin:0;padding:0}
 html,body{height:100%}
-body{font-family:'Plus Jakarta Sans',system-ui,-apple-system,Segoe UI,Roboto,sans-serif;background:var(--bg);color:var(--ink);-webkit-font-smoothing:antialiased;line-height:1.5;overflow-x:hidden;padding-top:env(safe-area-inset-top)}
+html{background:var(--bg)}
+body{font-family:'Plus Jakarta Sans',system-ui,-apple-system,Segoe UI,Roboto,sans-serif;background:var(--bg);color:var(--ink);-webkit-font-smoothing:antialiased;line-height:1.5;overflow-x:hidden}
 button{font-family:inherit;cursor:pointer;border:none;background:none;color:inherit}
 input,select{font-family:inherit;font-size:1rem}
 ::selection{background:var(--sea-soft)}
 
-.app{max-width:760px;margin:0 auto;padding:0 max(16px,env(safe-area-inset-left)) 120px}
-.topbar{position:sticky;top:0;z-index:30;margin:0 -16px;padding:calc(env(safe-area-inset-top) + 10px) 16px 0;background:linear-gradient(180deg,var(--bg) 72%,rgba(250,246,239,0))}
-.brand{display:flex;align-items:center;gap:12px}
-.brand-mark{width:42px;height:42px;border-radius:13px;flex:none;position:relative;overflow:hidden;background:linear-gradient(160deg,#16C2B5 0%,#0B7E7A 60%);box-shadow:0 6px 16px rgba(11,126,122,.28)}
+.app{max-width:760px;margin:0 auto;padding:0 max(16px,env(safe-area-inset-left)) calc(100px + env(safe-area-inset-bottom))}
+.topbar{position:sticky;top:0;z-index:30;margin:0 -16px;padding:calc(env(safe-area-inset-top) + 8px) 16px 8px;background:var(--bg);border-bottom:1px solid var(--line)}
+.brand{display:flex;align-items:center;gap:10px;min-width:0}
+.brand-mark{width:36px;height:36px;border-radius:11px;flex:none;position:relative;overflow:hidden;background:linear-gradient(160deg,#16C2B5 0%,#0B7E7A 60%);box-shadow:0 6px 16px rgba(11,126,122,.28)}
 .brand-mark::before{content:"";position:absolute;left:0;right:0;top:55%;bottom:0;background:linear-gradient(180deg,#0B7E7A,#0a5f5c)}
 .brand-mark::after{content:"";position:absolute;width:13px;height:13px;border-radius:50%;right:7px;top:7px;background:radial-gradient(circle at 35% 35%,#FFE7B8,#F6B64B);box-shadow:0 0 12px rgba(246,182,75,.8)}
-.brand h1{font-family:'Fraunces',serif;font-weight:600;font-size:1.22rem;letter-spacing:-.01em;line-height:1.05}
+.brand h1{font-family:'Fraunces',serif;font-weight:600;font-size:1rem;letter-spacing:-.01em;line-height:1.1;white-space:nowrap}
 .brand .sub{font-size:.72rem;color:var(--muted);font-weight:500}
 .cur-toggle{margin-left:auto;display:flex;background:var(--surface);border:1px solid var(--line);border-radius:999px;padding:3px;box-shadow:var(--shadow);flex:none}
 .cur-toggle button{padding:7px 11px;border-radius:999px;font-weight:700;font-size:.82rem;color:var(--muted);transition:.18s;min-width:34px}
@@ -346,6 +347,11 @@ input,select{font-family:inherit;font-size:1rem}
 .bal-group-head{display:flex;justify-content:space-between;align-items:center;padding:8px 14px;font-size:.76rem;font-weight:700;background:var(--surface);border-bottom:1px solid var(--line)}
 .bal-total{font-size:.84rem;font-weight:800}
 .bal-zero-row{font-size:.72rem;color:var(--muted);padding:8px 14px;border-top:1px solid var(--line);font-style:italic}
+.exp-pending{opacity:.75;border-left:3px solid var(--gold)!important}
+.badge-pending{font-size:.7rem;font-weight:700;color:var(--gold);background:#FFF8E0;border-radius:999px;padding:2px 8px;margin-left:6px;display:inline-flex;align-items:center;gap:4px}
+.confirm-pending{font-size:.68rem;font-weight:700;color:var(--pos);background:none;border:none;text-decoration:underline;cursor:pointer;padding:0}
+.exp-note{font-size:.74rem;color:var(--sea-dark);font-style:italic;margin-top:3px;line-height:1.35}
+.exp-note::before{content:''}
 .wadmin{font-size:.62rem;font-weight:700;color:#7B5B2E;background:#FFF4E0;border-radius:999px;padding:2px 7px;margin-top:2px}
 .cur-badge{font-size:.72rem;font-weight:700;padding:3px 9px;border-radius:999px;white-space:nowrap;border:1px solid transparent}
 .admin-badge{font-size:.7rem;font-weight:700;background:#FFF4E0;color:#7B5B2E;border:1px solid #F6B64B;padding:3px 8px;border-radius:999px;white-space:nowrap}
@@ -509,6 +515,29 @@ input,select{font-family:inherit;font-size:1rem}
       </div>
     </div>
 
+    <div class="sec-title">Presupuesto del viaje</div>
+    <div class="card card-pad">
+      <div class="field">
+        <label>Presupuesto por persona en $ (opcional)</label>
+        <div class="amt-group">
+          <input id="budgetInput" class="txtin" type="number" inputmode="decimal" min="0" placeholder="0.00" onchange="setBudget(this.value)">
+          <span style="display:flex;align-items:center;padding:0 10px;font-size:.82rem;color:var(--muted);font-weight:600">× 11</span>
+        </div>
+        <div class="hint" id="budgetNote" style="margin-top:6px;margin-bottom:0"></div>
+      </div>
+    </div>
+
+    <div class="sec-title">Exportar resumen</div>
+    <div class="card card-pad" style="display:flex;gap:10px;flex-wrap:wrap">
+      <button class="btn btn-ghost" style="flex:1" onclick="exportSummary()">📊 Resumen del viaje</button>
+      <button class="btn btn-ghost" style="flex:1" onclick="exportData()">⬇ Exportar datos</button>
+    </div>
+
+    <div class="sec-title">Historial de cambios</div>
+    <div class="card">
+      <div id="auditLogList"><div class="empty" style="padding:16px"><div class="t2">Sin cambios registrados aún.</div></div></div>
+    </div>
+
     <div class="sec-title">Histórico de tasas</div>
     <div class="card">
       <div class="field" style="padding-bottom:10px">
@@ -556,11 +585,7 @@ input,select{font-family:inherit;font-size:1rem}
 
   <!-- ===== MI RESUMEN ===== -->
   <section id="v-mi-resumen" class="view">
-    <div class="sec-title" id="miResumenTitle">Mi resumen</div>
     <div id="miResumenContent"></div>
-    <div style="margin-top:12px">
-      <button class="btn btn-ghost" style="width:100%" onclick="showWelcome()">Cambiar usuario</button>
-    </div>
   </section>
 <div class="scrim" id="scrim" onclick="if(event.target===this)closeForm()">
   <div class="modal" role="dialog" aria-modal="true" aria-labelledby="formTitle">
@@ -601,7 +626,17 @@ input,select{font-family:inherit;font-size:1rem}
         </div>
         <div class="hint" id="amountNote" style="margin-top:7px;margin-bottom:0"></div>
       </div>
-      <div class="fl" id="roundFl">
+      <div class="fl">
+        <label for="fNote">Nota (opcional)</label>
+        <input id="fNote" class="txtin" placeholder="Ej: Taxi del aeropuerto, llegamos tarde">
+      </div>
+      <div class="fl">
+        <label style="display:flex;align-items:center;gap:8px">
+          <input type="checkbox" id="fPending" style="width:16px;height:16px;accent-color:var(--gold)">
+          Marcar como pendiente de confirmación
+        </label>
+        <div class="hint" style="margin-top:4px;margin-bottom:0">Un admin deberá confirmar el monto antes de que entre al cálculo</div>
+      </div>
         <label style="display:flex;align-items:center;gap:8px">
           <input type="checkbox" id="useRound" onchange="toggleRound()" style="width:16px;height:16px;accent-color:var(--sea)">
           Redondear total (diferencia va al 🪙 Pote)
@@ -631,7 +666,8 @@ input,select{font-family:inherit;font-size:1rem}
         <div class="hint" style="margin-bottom:9px">Selecciona una o varias personas. Los montos se reparten en el total del gasto; si no los pones a mano, se distribuyen igual entre los que pagaron.</div>
         <div id="payerPick"></div>
         <div class="splitnote" id="payerNote"></div>
-        <div style="margin-top:8px;display:flex;gap:8px">
+        <div style="margin-top:8px;display:flex;gap:8px;flex-wrap:wrap">
+          <button type="button" style="font-size:.74rem;font-weight:700;color:var(--sea-dark);text-decoration:underline;background:none;border:none;cursor:pointer" onclick="iPayAll()">💳 Yo pagué todo</button>
           <button type="button" style="font-size:.74rem;font-weight:700;color:var(--sea-dark);text-decoration:underline;background:none;border:none;cursor:pointer" onclick="payerSplitEqual()">Repartir pagos en partes iguales</button>
         </div>
       </div>
@@ -958,16 +994,17 @@ let _id = 1;
 // inputCur: moneda en que se expresó el monto ('USD','Bs','USD_BCV','USD_PAR','EUR')
 // amount: monto NATIVO ya convertido (siempre en la unidad del payType)
 // repayRate: Bs por 1 USD de referencia (para gastos Bs); null para USD
-function mk(desc, cat, amount, payType, inputCur, repayRate, rateDate, payers, parts, mode, exact, date){
+function mk(desc, cat, amount, payType, inputCur, repayRate, rateDate, payers, parts, mode, exact, date, note, pending){
   return {
     id: 'e'+(_id++)+'_'+Date.now().toString(36)+Math.random().toString(36).slice(2,5),
     desc, cat, amount,
-    payType,    // 'USD' | 'Bs'
-    inputCur,   // cómo se expresó el monto
-    repayRate:  repayRate||null,   // Bs/$ de referencia (solo para Bs)
-    rateDate:   rateDate||'',
+    payType, inputCur,
+    repayRate: repayRate||null,
+    rateDate:  rateDate||'',
     payers, parts:[...parts], mode, exact:exact||{}, date,
-    // campo legacy 'cur' para compatibilidad con código viejo de renderExpenses
+    note:    note||'',
+    pending: pending||false,
+    photo:   null,
     cur: payType
   };
 }
@@ -1115,6 +1152,7 @@ function computeSettlements(mode){
     const paid={}, owes={};
     entities.forEach(e=>e.members.forEach(m=>{paid[m]=0; owes[m]=0;}));
     for(const exp of DB.expenses){
+      if(exp.pending) continue;
       if(payGroup(exp)!==grp) continue;
       const sh=expenseShares(exp);
       if(exp.payers && typeof exp.payers==='object'){
@@ -1273,13 +1311,19 @@ function renderExpenses(){
     const showOrig = pt==='Bs' && DB.displayCur!=='Bs'
       ? `<div class="orig">Bs ${nfp(e.amount)}</div>` : '';
 
-    return `<div class="exp"><div class="cat">${getCat(e.cat).e}</div>
-      <div class="info"><div class="d1">${escapeHtml(e.desc)}</div>
+    return `<div class="exp${e.pending?' exp-pending':''}"><div class="cat">${getCat(e.cat).e}</div>
+      <div class="info">
+        <div class="d1">${escapeHtml(e.desc)}${e.pending?` <span class="badge-pending">⏳ Pendiente${isAdmin()?' · <button class="confirm-pending" onclick="confirmPending(\''+e.id+'\')">Confirmar ✓</button>':''}</span>`:''}</div>
         <div class="d2">Pagó ${payerNames} · entre ${who}${dateStr?' · '+dateStr:''}</div>
-        ${repayLine}</div>
-      <div class="right"><div class="val">${fmt(usd)}</div>
+        ${e.note?`<div class="exp-note">💬 ${escapeHtml(e.note)}</div>`:''}
+        ${repayLine}
+        ${e.photo?`<img src="${e.photo}" style="max-width:100%;border-radius:8px;margin-top:6px;max-height:140px;object-fit:cover" onclick="viewPhoto('${e.id}')">`:''}
+      </div>
+      <div class="right"><div class="val">${e.pending?'<span style="color:var(--muted)">?</span>':fmt(usd)}</div>
         ${showOrig}
         <div class="acts">
+          <button onclick="addPhoto('${e.id}')" aria-label="Foto" title="Adjuntar foto"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="7" width="18" height="14" rx="2"/><circle cx="12" cy="14" r="3"/><path d="M9 7V5a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg></button>
+          <button onclick="dupExpense('${e.id}')" aria-label="Duplicar" title="Duplicar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button>
           <button onclick="editExpense('${e.id}')" aria-label="Editar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></svg></button>
           <button onclick="delExpense('${e.id}')" aria-label="Borrar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6M10 11v6M14 11v6"/></svg></button>
         </div></div></div>`;
@@ -1301,8 +1345,9 @@ function computeNetAdjusted(){
   PEOPLE.forEach(p=>{ netUSD[p]=0; netBs[p]=0; });
 
   for(const exp of DB.expenses){
+    if(exp.pending) continue;
     const pt  = exp.payType||'USD';
-    const rr  = exp.repayRate||0;  // Bs/$ de referencia (solo para Bs)
+    const rr  = exp.repayRate||0;
 
     if(pt==='Bs'){
       // Trabajamos en centavos de Bs nativos
@@ -1648,22 +1693,30 @@ function applyCatHighlight(){ document.querySelectorAll('#catPick button[data-ca
 function setCat(k){ form.cat=k; applyCatHighlight(); }
 
 function buildPayerPick(){
+  // Pote aparece como pagador solo si tiene crédito positivo (balance > 0)
+  const {netUSD} = computeNetAdjusted();
+  const poteHasCredit = (netUSD['Pote']||0) > 50; // > $0.50 de crédito
+
   const groups = COUPLES.map(c=>({title:coupleLabel(c),members:c.members}))
-    .concat([{title:'Sin pareja',members:SOLO.filter(p=>!VIRTUAL.has(p))}]);
-  document.getElementById('payerPick').innerHTML = groups.map(g=>
-    `<div class="coupleblock"><div class="ctitle">${g.title}</div><div class="partgrid">`+
+    .concat([{title:'Sin pareja',members:SOLO.filter(p=>!VIRTUAL.has(p)||(p==='Pote'&&poteHasCredit))}]);
+
+  document.getElementById('payerPick').innerHTML = groups.map(g=>{
+    if(!g.members.length) return '';
+    return `<div class="coupleblock"><div class="ctitle">${g.title}</div><div class="partgrid">`+
     g.members.map(p=>{
       const on = p in form.payers;
       const val = on ? form.payers[p] : '';
+      const isPote = p==='Pote';
+      const poteLabel = isPote ? `🪙 Pote <span style="font-size:.65rem;color:var(--pos);font-weight:700">+$${nfp((netUSD['Pote']||0)/100)}</span>` : disp(p);
       return `<div class="part ${on?'on':''}" id="pyr_${p}" onclick="togglePayer(event,'${p}')">
-        ${avatar(p)}<span>${disp(p)}</span>
+        ${avatar(p)}<span>${isPote?poteLabel:disp(p)}</span>
         <input class="exact" type="number" inputmode="decimal" step="0.01" min="0" placeholder="0.00"
           value="${val}" oninput="onPayerInput('${p}',this.value)"
           onfocus="activatePayer('${p}')"
           ${on?'':'disabled style=opacity:.4'}>
       </div>`;
-    }).join('')+`</div></div>`
-  ).join('');
+    }).join('')+`</div></div>`;
+  }).join('');
   updatePayerNote();
 }
 // Activa un pagador al hacer foco en su input (aunque estuviera desactivado)
@@ -1859,6 +1912,8 @@ function openForm(){
   const ur=document.getElementById('useRound'); if(ur){ ur.checked=false; }
   const rf=document.getElementById('roundFields'); if(rf){ rf.style.display='none'; }
   const frEl=document.getElementById('fRound'); if(frEl){ frEl.value=''; }
+  const fnEl=document.getElementById('fNote'); if(fnEl){ fnEl.value=''; }
+  const fpEl=document.getElementById('fPending'); if(fpEl){ fpEl.checked=false; }
   setPayType(form.payType); buildPayerPick(); setSplitMode('equal');
   showScrim();
 }
@@ -1876,6 +1931,8 @@ function editExpense(id){
   let payers=e.payers&&typeof e.payers==='object'?Object.assign({},e.payers):{[e.paidBy||'Angela']:''};
   form={payType:pt,inputCur:ic,rateType:rt,cur:pt,
         cat:ec,payers,mode:e.mode,parts:new Set(e.parts),exact:Object.assign({},e.exact)};
+  const fnEl2=document.getElementById('fNote'); if(fnEl2) fnEl2.value=e.note||'';
+  const fpEl2=document.getElementById('fPending'); if(fpEl2) fpEl2.checked=!!(e.pending);
   setPayType(pt); buildPayerPick(); setSplitMode(e.mode);
   showScrim();
 }
@@ -1920,29 +1977,86 @@ function saveExpense(){
   }
   // Si hay redondeo, acreditar la diferencia al Pote
   if(nativeDiff>0.001) payers['Pote']=(payers['Pote']||0)+nativeDiff;
+  const note    = (document.getElementById('fNote')?.value||'').trim();
+  const pending = !!(document.getElementById('fPending')?.checked);
   if(editingId){
     Object.assign(DB.expenses.find(x=>x.id===editingId),{
       desc,amount:nativeTotal,payType:form.payType,inputCur:form.inputCur,cur:form.payType,
-      repayRate,rateDate:(DB.ratesDate||''),cat:form.cat,payers,mode:form.mode,parts,exact,date
+      repayRate,rateDate:(DB.ratesDate||''),cat:form.cat,payers,mode:form.mode,parts,exact,date,
+      note, pending
     });
     toast('Gasto actualizado');
   } else {
     DB.expenses.push(mk(desc,form.cat,nativeTotal,form.payType,form.inputCur,
-      repayRate,DB.ratesDate||'',payers,parts,form.mode,exact,date));
-    toast('Gasto agregado ✓');
+      repayRate,DB.ratesDate||'',payers,parts,form.mode,exact,date,note,pending));
+    toast(pending?'Gasto agregado · pendiente de confirmación ⏳':'Gasto agregado ✓');
   }
   save(); closeForm(); renderAll();
+}
+function confirmPending(id){
+  const e=DB.expenses.find(x=>x.id===id); if(!e||!isAdmin()) return;
+  e.pending=false; e.confirmedBy=ME; e.confirmedAt=new Date().toISOString();
+  if(!DB.auditLog) DB.auditLog=[];
+  DB.auditLog.unshift({action:'confirm',expId:id,desc:e.desc,by:ME,at:new Date().toISOString()});
+  save(); renderAll(); toast(`✓ "${e.desc}" confirmado`);
+}
+function addPhoto(id){
+  const inp=document.createElement('input');
+  inp.type='file'; inp.accept='image/*'; inp.capture='environment';
+  inp.onchange=async()=>{
+    const file=inp.files[0]; if(!file) return;
+    const canvas=document.createElement('canvas');
+    const img=new Image(); img.src=URL.createObjectURL(file);
+    await new Promise(r=>img.onload=r);
+    const maxW=800;
+    canvas.width=Math.min(img.width,maxW);
+    canvas.height=Math.round(img.height*(canvas.width/img.width));
+    canvas.getContext('2d').drawImage(img,0,0,canvas.width,canvas.height);
+    const e=DB.expenses.find(x=>x.id===id); if(!e) return;
+    e.photo=canvas.toDataURL('image/jpeg',0.7);
+    save(); renderAll(); toast('📷 Foto adjunta al gasto');
+  };
+  inp.click();
+}
+function viewPhoto(id){
+  const e=DB.expenses.find(x=>x.id===id); if(!e?.photo) return;
+  const ov=document.createElement('div');
+  ov.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.88);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px;cursor:zoom-out';
+  ov.innerHTML=`<img src="${e.photo}" style="max-width:100%;max-height:88vh;border-radius:12px;box-shadow:0 8px 40px rgba(0,0,0,.6)">`;
+  ov.onclick=()=>ov.remove();
+  document.body.appendChild(ov);
+}
+function dupExpense(id){
+  const e=DB.expenses.find(x=>x.id===id); if(!e) return;
+  editingId=null;
+  document.getElementById('formTitle').textContent='Duplicar gasto';
+  document.getElementById('fDesc').value=e.desc+' (copia)';
+  document.getElementById('fAmount').value=e.amount;
+  document.getElementById('fDate').value=new Date().toISOString().slice(0,10);
+  const pt=e.payType||'USD';
+  const rt=(e.rateType==='par')?'par':'bcv';
+  let payers=e.payers&&typeof e.payers==='object'?Object.assign({},e.payers):{[e.paidBy||'Angela']:''};
+  form={payType:pt,inputCur:e.inputCur||'USD',rateType:rt,cur:pt,
+        cat:e.cat,payers,mode:e.mode,parts:new Set(e.parts),exact:Object.assign({},e.exact)};
+  const ur=document.getElementById('useRound'); if(ur) ur.checked=false;
+  const rf=document.getElementById('roundFields'); if(rf) rf.style.display='none';
+  setPayType(pt); buildPayerPick(); setSplitMode(e.mode);
+  showScrim();
+}
+function iPayAll(){
+  if(!ME||VIRTUAL.has(ME)) return;
+  // Desmarcar todos los demás pagadores, marcar solo yo
+  form.payers={[ME]:''};
+  buildPayerPick(); updatePayerNote(); validateForm();
+  toast(`${disp(ME)} pagó todo`);
 }
 function delExpense(id){
   const e=DB.expenses.find(x=>x.id===id);
   if(!confirm('¿Borrar "'+(e?e.desc:'este gasto')+'"?')) return;
+  if(!DB.auditLog) DB.auditLog=[];
+  DB.auditLog.unshift({action:'delete',expId:id,desc:e?.desc||'',by:ME,at:new Date().toISOString()});
   DB.expenses=DB.expenses.filter(x=>x.id!==id);
-  // Al borrar un gasto los balances cambian → los saldos anteriores ya no son válidos
-  if(DB.expenses.length===0){
-    // Sin gastos: limpiar todo
-    DB.settled={}; DB.alerts={};
-  }
-  // Si quedan gastos: mantener saldos (el usuario decide si son aún válidos)
+  if(DB.expenses.length===0){ DB.settled={}; DB.alerts={}; }
   save(); renderAll(); toast('Gasto eliminado');
 }
 
@@ -2193,7 +2307,8 @@ function go(v){
   document.querySelectorAll('.view').forEach(s=>s.classList.remove('on'));
   document.getElementById('v-'+v).classList.add('on');
   document.querySelectorAll('.tab').forEach(t=>t.classList.toggle('on',t.dataset.v===v));
-  window.scrollTo({top:0,behavior:'smooth'});
+  // Scroll instantáneo para evitar el efecto de espacio fantasma
+  window.scrollTo({top:0,behavior:'instant'});
   document.getElementById('fab').style.display = (v==='ajustes'||v==='mi-resumen')?'none':'flex';
   if(v==='mi-resumen') renderMiResumen();
 }
@@ -2297,17 +2412,83 @@ function renderNotifs(){
   }).join('');
 }
 
-function renderAll(){ renderResumen(); renderCatFilter(); renderExpenses(); renderBalances(); renderSettle(); renderNotifs(); renderRateHistory(); renderMiResumen(); }
+function setBudget(v){
+  const b=parseFloat(v)||0;
+  DB.budget=b>0?b:null; // monto POR PERSONA
+  save(); renderBudgetNote();
+}
+function renderBudgetNote(){
+  const el=document.getElementById('budgetNote'); if(!el) return;
+  const inp=document.getElementById('budgetInput'); if(inp&&DB.budget>0) inp.value=DB.budget;
+  if(!DB.budget||DB.budget<=0){ el.textContent=''; return; }
+  const nPeople=PEOPLE.filter(p=>!VIRTUAL.has(p)).length; // 11
+  const totalBudget=DB.budget*nPeople;
+  const totalUSD=DB.expenses.filter(e=>!e.pending).reduce((s,e)=>s+Math.round(toUSD(e.amount,e.payType||'USD',e.repayRate||0)*100),0)/100;
+  const pct=Math.round(totalUSD/totalBudget*100);
+  const remaining=totalBudget-totalUSD;
+  const color=pct>=100?'var(--neg)':pct>=80?'var(--gold)':'var(--pos)';
+  el.innerHTML=`<div style="margin-bottom:4px;font-size:.78rem;color:var(--muted)">Total grupo: <b>$${nfp(totalBudget)}</b> ($${nfp(DB.budget)} × ${nPeople} personas)</div>
+    <div style="margin-bottom:6px;font-weight:700;color:${color}">${pct}% consumido · ${remaining>0?'$'+nfp(remaining)+' restantes':'$'+nfp(-remaining)+' sobre presupuesto'}</div>
+    <div style="height:8px;background:var(--line);border-radius:99px;overflow:hidden">
+      <div style="height:8px;width:${Math.min(pct,100)}%;background:${color};border-radius:99px;transition:.4s"></div>
+    </div>`;
+}
+function exportSummary(){
+  const {net}=computeBalances();
+  const totalUSD=DB.expenses.filter(e=>!e.pending).reduce((s,e)=>s+Math.round(toUSD(e.amount,e.payType||'USD',e.repayRate||0)*100),0)/100;
+  const date=new Date().toLocaleDateString('es-VE',{day:'numeric',month:'long',year:'numeric'});
+  const cm=catMap();
+  const byCat={};
+  DB.expenses.filter(e=>!e.pending).forEach(e=>{
+    const pt=e.payType||'USD',rr=e.repayRate||0;
+    const usd=toUSD(e.amount,pt,rr);
+    byCat[e.cat]=(byCat[e.cat]||0)+usd;
+  });
+  const catRows=Object.entries(byCat).sort((a,b)=>b[1]-a[1])
+    .map(([id,v])=>`${cm[id]?.e||'🏷️'} ${cm[id]?.label||'Otro'}: $${nfp(v)}`).join('\n');
+  const balRows=PEOPLE.filter(p=>!VIRTUAL.has(p))
+    .map(p=>{const n=net[p]/100; return `${disp(p)}: ${n>0.01?'le deben $'+nfp(n):n<-0.01?'debe $'+nfp(-n):'✓ saldado'}`;})
+    .join('\n');
+  const txt=`CUENTAS DE MARGARITA 🏝️\n${'─'.repeat(30)}\n${date}\n\nTOTAL GASTADO: $${nfp(totalUSD)}${DB.budget?'\nPRESUPUESTO: $'+nfp(DB.budget)+' ('+Math.round(totalUSD/DB.budget*100)+'%)':''}\n\nPOR CATEGORÍA:\n${catRows}\n\nBALANCES:\n${balRows}\n`;
+  const a=document.createElement('a');
+  a.href='data:text/plain;charset=utf-8,'+encodeURIComponent(txt);
+  a.download='resumen-margarita.txt'; a.click();
+}
+function renderAuditLog(){
+  const el=document.getElementById('auditLogList'); if(!el) return;
+  const log=(DB.auditLog||[]).slice(0,30);
+  if(!log.length){
+    el.innerHTML=`<div class="empty" style="padding:16px"><div class="t2">Sin cambios registrados aún.</div></div>`;
+    return;
+  }
+  const icons={add:'➕',edit:'✏️',delete:'🗑️',confirm:'✓'};
+  const labels={add:'Agregó',edit:'Editó',delete:'Borró',confirm:'Confirmó'};
+  el.innerHTML=log.map(l=>{
+    const dt=new Date(l.at).toLocaleString('es-VE',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'});
+    return `<div style="display:flex;gap:10px;padding:10px 14px;border-bottom:1px solid var(--line);font-size:.8rem">
+      <span style="font-size:1rem">${icons[l.action]||'•'}</span>
+      <div style="flex:1">
+        <span style="font-weight:700">${disp(l.by)||'Alguien'}</span> ${labels[l.action]||l.action} <em>"${escapeHtml(l.desc)}"</em>
+      </div>
+      <span style="color:var(--muted);flex:none">${dt}</span>
+    </div>`;
+  }).join('');
+}
+function renderAll(){ renderResumen(); renderCatFilter(); renderExpenses(); renderBalances(); renderSettle(); renderNotifs(); renderRateHistory(); renderMiResumen(); renderAuditLog(); renderBudgetNote(); }
 
 function renderMiResumen(){
   const el=document.getElementById('miResumenContent'); if(!el) return;
-  const title=document.getElementById('miResumenTitle');
   if(!ME||!COLORS[ME]){
-    if(title) title.textContent='Mi resumen';
-    el.innerHTML=`<div class="empty"><div class="em">👤</div><div class="t1">¿Quién eres?</div><div class="t2">Identifícate para ver tu resumen personal.</div></div>`;
+    el.innerHTML=`<div class="sec-title">Mi resumen</div>
+      <div class="empty"><div class="em">👤</div><div class="t1">¿Quién eres?</div><div class="t2">Identifícate para ver tu resumen personal.</div></div>`;
     return;
   }
-  if(title) title.textContent=`Resumen · ${disp(ME)}`;
+
+  // Encabezado con nombre + botón cambiar usuario en la misma línea
+  const header=`<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+    <div class="sec-title" style="margin:0">Resumen · ${disp(ME)}</div>
+    <button class="btn btn-ghost" style="padding:7px 14px;font-size:.78rem;white-space:nowrap" onclick="showWelcome()">👤 Cambiar</button>
+  </div>`;
 
   // ── Calcular las 3 métricas por moneda ──
   let paidUSD=0, paidBs=0;   // Lo que PAGUÉ (puse de mi bolsillo)
@@ -2467,7 +2648,7 @@ function renderMiResumen(){
     html+=`</div>`;
   }
 
-  el.innerHTML=html;
+  el.innerHTML=header+html;
 }
 
 /* ============ Init ============ */
