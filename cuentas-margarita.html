@@ -40,9 +40,7 @@ input,select{font-family:inherit;font-size:1rem}
 .brand-mark::after{content:"";position:absolute;width:13px;height:13px;border-radius:50%;right:7px;top:7px;background:radial-gradient(circle at 35% 35%,#FFE7B8,#F6B64B);box-shadow:0 0 12px rgba(246,182,75,.8)}
 .brand h1{font-family:'Fraunces',serif;font-weight:600;font-size:1.22rem;letter-spacing:-.01em;line-height:1.05}
 .brand .sub{font-size:.72rem;color:var(--muted);font-weight:500}
-.cur-toggle{margin-left:auto;display:flex;background:var(--surface);border:1px solid var(--line);border-radius:999px;padding:3px;box-shadow:var(--shadow);flex:none}
-.cur-toggle button{padding:7px 11px;border-radius:999px;font-weight:700;font-size:.82rem;color:var(--muted);transition:.18s;min-width:34px}
-.cur-toggle button.on{background:var(--ink);color:#fff}
+
 
 .hero{margin-top:14px;background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:20px 20px 18px;box-shadow:var(--shadow);position:relative;overflow:hidden}
 .hero .horizon{position:absolute;inset:0 0 auto;height:5px;background:linear-gradient(90deg,var(--sea),var(--gold),var(--coral))}
@@ -389,11 +387,6 @@ input,select{font-family:inherit;font-size:1rem}
         <div class="sub">Gastos del viaje · 11 viajeros</div>
       </div>
       <button class="me-chip" id="meChip" onclick="showWelcome()" title="Cambiar usuario"></button>
-      <div class="cur-toggle" role="group" aria-label="Moneda de visualización">
-        <button class="on" onclick="setDisplayCur('USD')">$</button>
-        <button onclick="setDisplayCur('EUR')">€</button>
-        <button onclick="setDisplayCur('Bs')">Bs</button>
-      </div>
     </div>
     <div id="connStatus" class="conn-pill conn-connecting"><span>🟡</span> Conectando…</div>
   </div>
@@ -707,7 +700,24 @@ let DB = {
   defaultCur: 'USD',
 };
 // El cambio €↔$ se deriva de las tasas BCV, así todo queda consistente.
-function recalcRate(){ if(DB.bcvUsd>0 && DB.bcvEur>0) DB.rate = DB.bcvEur/DB.bcvUsd; }
+function recalcRate(){
+  const today = todayKey();
+  const dow = new Date(today+'T12:00:00').getDay();
+  // Si es sábado(6) o domingo(0), usar el viernes anterior
+  let targetDate = today;
+  if(dow===6) targetDate = new Date(new Date(today+'T12:00:00').setDate(new Date(today+'T12:00:00').getDate()-1)).toISOString().slice(0,10);
+  if(dow===0) targetDate = new Date(new Date(today+'T12:00:00').setDate(new Date(today+'T12:00:00').getDate()-2)).toISOString().slice(0,10);
+  // Buscar esa fecha en el histórico
+  const hist = (DB.rateHistory||[]).sort((a,b)=>b.date.localeCompare(a.date));
+  const entry = hist.find(r=>r.date===targetDate) || hist.find(r=>r.date<targetDate);
+  if(entry){
+    if(entry.bcvUsd) DB.bcvUsd=entry.bcvUsd;
+    if(entry.bcvEur) DB.bcvEur=entry.bcvEur;
+    if(entry.parUsd) DB.parUsd=entry.parUsd;
+    DB.ratesDate=entry.date;
+  }
+  if(DB.bcvUsd>0&&DB.bcvEur>0) DB.rate=DB.bcvEur/DB.bcvUsd;
+}
 // Bs por 1 USD según la tasa activa (BCV o Paralelo)
 function activeUsd(){ return DB.parUsd||DB.bcvUsd; }
 function rateLabel(mode){ return mode==='par' ? 'USDT/Par' : 'BCV'; }
@@ -2258,11 +2268,15 @@ function saveRateEntry(originalDate, isNew){
   const parUsd=parseFloat(document.getElementById('redit_parUsd').value)||0;
   if(!bcvUsd&&!bcvEur&&!parUsd){ toast('Ingresa al menos un valor'); return; }
   pushToHistory({date, bcvUsd:bcvUsd||undefined, bcvEur:bcvEur||undefined, parUsd:parUsd||undefined});
-  // Si es la fecha activa, actualizar también las tasas en uso
-  if(date===DB.ratesDate||date===todayKey()){
+  // Actualizar tasas activas si la fecha guardada es la más reciente del histórico
+  // (o es hoy, o es más reciente que la activa actual)
+  const today=todayKey();
+  const latestHist=(DB.rateHistory||[]).filter(r=>r.date<=today).sort((a,b)=>b.date.localeCompare(a.date))[0];
+  if(latestHist&&latestHist.date===date){
     if(bcvUsd) DB.bcvUsd=bcvUsd;
     if(bcvEur) DB.bcvEur=bcvEur;
     if(parUsd) DB.parUsd=parUsd;
+    DB.ratesDate=date;
     recalcRate();
   }
   save(); renderRateHistory(); syncSettings(); renderAll();
