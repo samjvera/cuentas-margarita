@@ -1476,7 +1476,118 @@ function renderBalances(){
   if(hasUSD) html += section('Dólares', netUSD, '💵', '$');
   if(hasBs)  html += section('Bolívares', netBs, '🇻🇪', 'Bs');
   if(!hasUSD && !hasBs) html += section('Balances', netUSD, '💵', '$');
+
+  // Sección del Pote
+  const poteSummary = computePoteSummary();
+  if(poteSummary.hasActivity) html += renderPoteSection(poteSummary);
+
   el.innerHTML = html;
+}
+
+function computePoteSummary(){
+  // Créditos: gastos donde Pote aparece en payers (redondeos que le acreditaron al Pote)
+  // Gastos: gastos donde Pote figura como pagador pero el gasto no fue redondeo
+  //         (Pote "absorbió" parte del costo)
+  // Neto: créditos - gastos = saldo del Pote
+  const credits = []; // {desc, amt, cur, date} — alguien redondeó y Pote recibió crédito
+  const expenses = []; // {desc, amt, cur, date} — Pote pagó parte de un gasto
+  let totalCreditUSD = 0, totalExpenseUSD = 0;
+  let totalCreditBs = 0, totalExpenseBs = 0;
+
+  for(const exp of DB.expenses){
+    const pt = exp.payType||'USD';
+    const rr = exp.repayRate||0;
+    const poteAmt = parseFloat(exp.payers?.Pote)||0;
+    if(poteAmt<=0) continue;
+
+    // El Pote pagó poteAmt en este gasto
+    // ¿Tiene partes? Si el Pote está en parts → es un gasto del Pote (absorbió su propia parte)
+    // Si NO está en parts → fue un crédito puro (redondeo)
+    const poteInParts = exp.parts.includes('Pote');
+    const poteShare = poteInParts
+      ? (pt==='Bs' ? (poteAmt/exp.amount*(exp.amount)) : toUSD(poteAmt,pt,rr))
+      : 0;
+    const poteCredit = poteInParts
+      ? 0
+      : (pt==='Bs' ? 0 : toUSD(poteAmt,pt,rr)); // crédito puro en USD
+
+    if(pt==='Bs'){
+      // Gasto en Bs: Pote paga en Bs
+      totalExpenseBs += Math.round(poteAmt*100);
+      expenses.push({desc:exp.desc, amt:poteAmt, cur:'Bs', date:exp.date,
+        usdEq:rr>0?poteAmt/rr:0});
+    } else {
+      const usdAmt = toUSD(poteAmt,pt,rr);
+      if(!poteInParts){
+        // Crédito puro (redondeo): alguien pagó de más y el Pote recibió el exceso
+        totalCreditUSD += Math.round(usdAmt*100);
+        credits.push({desc:exp.desc, amt:usdAmt, cur:'USD', date:exp.date});
+      } else {
+        // Pote asumió su propia parte del gasto
+        totalExpenseUSD += Math.round(usdAmt*100);
+        expenses.push({desc:exp.desc, amt:usdAmt, cur:'USD', date:exp.date});
+      }
+    }
+  }
+
+  const netUSD = totalCreditUSD - totalExpenseUSD;
+  const netBs  = totalCreditBs  - totalExpenseBs;
+  return {
+    credits, expenses,
+    totalCreditUSD:totalCreditUSD/100,
+    totalExpenseUSD:totalExpenseUSD/100,
+    totalCreditBs:totalCreditBs/100,
+    totalExpenseBs:totalExpenseBs/100,
+    netUSD:netUSD/100, netBs:netBs/100,
+    hasActivity: credits.length>0 || expenses.length>0
+  };
+}
+
+function renderPoteSection(s){
+  const netUSDColor = s.netUSD>0.01?'var(--pos)':s.netUSD<-0.01?'var(--neg)':'var(--muted)';
+  const netUSDLabel = s.netUSD>0.01?'Saldo positivo (le deben al Pote)':s.netUSD<-0.01?'Saldo negativo':' Saldo en cero ✓';
+
+  function row(item){
+    const dt = item.date?new Date(item.date+'T00:00').toLocaleDateString('es-VE',{day:'numeric',month:'short'}):'';
+    const amt = item.cur==='Bs'
+      ? `Bs ${nfp(item.amt)}${item.usdEq?` <span style="color:var(--muted);font-size:.7rem">(≈$${nfp(item.usdEq)})</span>`:''}`
+      : `$${nfp(item.amt)}`;
+    return `<div class="balrow" style="padding:8px 14px">
+      <div style="min-width:0;flex:1">
+        <div class="balname" style="font-size:.82rem">${escapeHtml(item.desc)}</div>
+        ${dt?`<div class="balsub">${dt}</div>`:''}
+      </div>
+      <div class="balamt"><div class="n">${amt}</div></div>
+    </div>`;
+  }
+
+  let html = `<div class="bal-sec-head" style="margin-top:16px">🪙 Fondo Pote</div>
+    <div class="card" style="overflow:hidden">`;
+
+  if(s.credits.length>0){
+    html += `<div class="bal-group-head pos-c">
+      <span>Créditos recibidos (${s.credits.length})</span>
+      <span class="bal-total pos-c">$${nfp(s.totalCreditUSD)}</span>
+    </div>`;
+    html += s.credits.map(row).join('');
+  }
+
+  if(s.expenses.length>0){
+    html += `<div class="bal-group-head neg-c" style="border-top:1px solid var(--line)">
+      <span>Gastos asumidos por el Pote (${s.expenses.length})</span>
+      <span class="bal-total neg-c">${s.totalExpenseUSD>0?'$'+nfp(s.totalExpenseUSD):'Bs '+nfp(s.totalExpenseBs)}</span>
+    </div>`;
+    html += s.expenses.map(row).join('');
+  }
+
+  html += `<div style="padding:10px 14px;border-top:1px solid var(--line);display:flex;justify-content:space-between;align-items:center">
+    <span style="font-size:.78rem;font-weight:700;color:var(--muted)">${netUSDLabel}</span>
+    <span style="font-weight:800;color:${netUSDColor};font-size:.95rem">
+      ${Math.abs(s.netUSD)>0.01?'$'+nfp(Math.abs(s.netUSD)):'$0,00'}
+    </span>
+  </div></div>`;
+
+  return html;
 }
 
 /* ============ Liquidar ============ */
