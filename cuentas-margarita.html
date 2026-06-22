@@ -148,6 +148,11 @@ input,select{font-family:inherit;font-size:1rem}
 
 .settle-section{}
 .settle-done{ opacity:.6; }
+.settle-filter{display:flex;gap:6px;flex-wrap:wrap;padding:10px 14px;border-bottom:1px solid var(--line)}
+.sfbtn{display:flex;align-items:center;gap:5px;padding:5px 10px;border-radius:999px;border:1px solid var(--line);background:var(--surface);font-size:.75rem;font-weight:600;color:var(--muted);cursor:pointer;transition:.15s}
+.sfbtn.on{background:var(--sea);color:#fff;border-color:var(--sea)}
+.sfbtn .av{width:18px;height:18px;font-size:.55rem}
+.settle-sep{display:flex;align-items:center;gap:10px;padding:12px 14px 4px;font-size:.78rem;font-weight:700;color:var(--muted)}
 .settle-done-head{
   display:flex;align-items:center;gap:7px;
   padding:11px 14px 10px;
@@ -1306,14 +1311,15 @@ function renderExpenses(){
       repayLine = `<div class="repay repay-cash">💵 Repago en <b>dólares</b> (cash/Zelle) · $${nfp(e.amount)}</div>`;
     } else {
       // Bolívares: monto en Bs, referencia en $, repago a la tasa del día
-      const rt   = e.rateType==='par'?'par':'bcv';
-      const rr   = e.repayRate>0 ? e.repayRate : (rt==='par'?(DB.parUsd||DB.bcvUsd):(DB.bcvUsd||0));
+      const rr   = e.repayRate>0 ? e.repayRate : (DB.parUsd||DB.bcvUsd||0);
       const usdEq= rr>0 ? e.amount/rr : 0;
       const ic   = e.inputCur||'Bs';
-      const icLbl= ic==='Bs'?'Bs':ic==='EUR'?'BCV €':ic==='USD_PAR'?'USDT/Par':'BCV $';
+      const icLbl= ic==='EUR'?'BCV €':ic==='USD_PAR'?'USDT/Par':ic==='USD_BCV'?'BCV $':'Bs';
+      // Etiqueta de la tasa usada para el repago (siempre paralelo en el modelo actual)
+      const rateLbl = `USDT/Par ${nfp(rr)} Bs/$`;
       const rdLbl= e.rateDate ? (' · tasa del '+escapeHtml(e.rateDate)) : '';
       repayLine = `<div class="repay repay-bs">🇻🇪 Pagado en Bs · <b>Bs ${nfp(e.amount)}</b>
-        (${icLbl}) · equiv. <b>$${nfp(usdEq)}</b> @ ${rateLabel(rt)} ${nfp(rr)} Bs/$${rdLbl}
+        (${icLbl}) · equiv. <b>$${nfp(usdEq)}</b> @ ${rateLbl}${rdLbl}
         <br><span style="color:var(--muted);font-size:.68rem">El repago en Bs se hace a la tasa del día que paguen</span></div>`;
     }
 
@@ -1351,23 +1357,21 @@ function computeNetAdjusted(){
   PEOPLE.forEach(p=>{ netUSD[p]=0; netBs[p]=0; });
 
   for(const exp of DB.expenses){
-    const pt  = exp.payType||'USD';
-    const rr  = exp.repayRate||0;
+    const pt = exp.payType||'USD';
 
     if(pt==='Bs'){
-      // Trabajamos en centavos de Bs nativos
-      const totalBsC = Math.round((exp.amount||0)*100);
+      // Solo en centavos de Bs nativos
+      const paidC = payersToUSDCents(exp); // reutiliza la lógica proporcional pero en Bs
+      // Para Bs usamos directamente los payers en Bs nativos
       if(exp.payers && typeof exp.payers==='object'){
         for(const [p,amt] of Object.entries(exp.payers))
           if(netBs[p]!==undefined) netBs[p]+=Math.round((parseFloat(amt)||0)*100);
-      } else if(exp.paidBy && netBs[exp.paidBy]!==undefined){
-        netBs[exp.paidBy]+=totalBsC;
       }
-      // Shares en centavos de Bs
-      const sh=expenseShares(exp);
+      const sh=expenseShares(exp); // centavos Bs
       for(const p in sh) if(netBs[p]!==undefined) netBs[p]-=sh[p];
+
     } else {
-      // Trabajamos en centavos de USD — usar payersToUSDCents para evitar desbalances
+      // Solo en centavos USD
       const paidC=payersToUSDCents(exp);
       for(const [p,c] of Object.entries(paidC))
         if(netUSD[p]!==undefined) netUSD[p]+=c;
@@ -1376,13 +1380,12 @@ function computeNetAdjusted(){
     }
   }
 
-  // Descontar saldados — en sus respectivas unidades nativas
+  // Descontar saldados en su grupo correspondiente
   const settled = DB.settled||{};
   for(const [key,sd] of Object.entries(settled)){
     if(!sd||!sd.amt||!sd.from||!sd.to) continue;
     if(!key.endsWith('__indiv')) continue;
     const target = sd.cur==='Bs' ? netBs : netUSD;
-    // sd.amt ya está en centavos nativos (Bs o USD)
     if(PEOPLE.includes(sd.from)) target[sd.from]=(target[sd.from]||0)+sd.amt;
     if(PEOPLE.includes(sd.to))   target[sd.to]  =(target[sd.to]  ||0)-sd.amt;
   }
@@ -1470,14 +1473,9 @@ function renderBalances(){
   }
 
   let html = '';
-  // Todo en USD — los gastos en Bs se convirtieron a $ a tasa paralelo del registro
-  html += section('Dólares + Bs (todo en $)', netUSD, '💵', '$');
-  // Nota informativa: equivalente en Bs a tasa paralelo de hoy
-  const parRate = DB.parUsd||DB.bcvUsd||1;
-  html += `<div style="font-size:.72rem;color:var(--muted);padding:8px 14px;border-top:1px solid var(--line)">
-    Los gastos en Bs se convirtieron a $ a tasa paralelo del día del gasto.<br>
-    Tasa paralelo actual: <b>${nfp(parRate)} Bs/$</b>
-  </div>`;
+  if(hasUSD) html += section('Dólares', netUSD, '💵', '$');
+  if(hasBs)  html += section('Bolívares', netBs, '🇻🇪', 'Bs');
+  if(!hasUSD && !hasBs) html += section('Balances', netUSD, '💵', '$');
   el.innerHTML = html;
 }
 
@@ -1534,20 +1532,30 @@ function renderSettle(){
     const adminBadge = (admin && !amPayer && !amPayee)
       ? `<span class="admin-badge">👑 Admin</span>` : '';
 
-    // Monto en $ + equivalente Bs a tasa paralelo de HOY
-    // Monto en centavos enteros para evitar errores de punto flotante
     const parRate = DB.parUsd||DB.bcvUsd||1;
     const amtCents = Math.round(t.amount);
-    const amtUSD   = amtCents/100;
-    const amtBs    = Math.round(amtUSD * parRate * 100)/100;
-    // Solo mostrar equivalente en Bs si hay gastos en Bs en el viaje
-    const hasBsExpenses = DB.expenses.some(e=>(e.payType||'USD')==='Bs');
-    const payDisplay = hasBsExpenses
-      ? `<div class="pay-block">
-          <div class="pay-usd">$${nfp(amtUSD)}</div>
-          <div class="pay-bs">Bs ${nfp(amtBs)} <span class="pay-bs-rate">a ${nfp(parRate)} Bs/$</span></div>
-        </div>`
-      : `<div class="pay-block"><div class="pay-usd">$${nfp(amtUSD)}</div></div>`;
+    const isBs = t.payType==='Bs';
+    let payDisplay;
+    if(isBs){
+      // Gasto en Bs: mostrar Bs como principal, $ como referencia
+      const amtBs  = amtCents/100;
+      const amtUSD = Math.round(amtBs/parRate*100)/100;
+      payDisplay = `<div class="pay-block">
+        <div class="pay-usd">Bs ${nfp(amtBs)}</div>
+        <div class="pay-bs">≈ $${nfp(amtUSD)} <span class="pay-bs-rate">a ${nfp(parRate)} Bs/$</span></div>
+      </div>`;
+    } else {
+      // Gasto en USD: mostrar $ como principal
+      const amtUSD = amtCents/100;
+      const hasBsExpenses = DB.expenses.some(e=>(e.payType||'USD')==='Bs');
+      const amtBs = Math.round(amtUSD*parRate*100)/100;
+      payDisplay = hasBsExpenses
+        ? `<div class="pay-block">
+            <div class="pay-usd">$${nfp(amtUSD)}</div>
+            <div class="pay-bs">Bs ${nfp(amtBs)} <span class="pay-bs-rate">a ${nfp(parRate)} Bs/$</span></div>
+          </div>`
+        : `<div class="pay-block"><div class="pay-usd">$${nfp(amtUSD)}</div></div>`;
+    }
 
     let metaHtml = '';
     if(isSettled){
@@ -1587,22 +1595,49 @@ function renderSettle(){
   }
 
   const pending  = allTx.filter(t=>!t.isSettled);
-  const doneList = allTx.filter(t=> t.isSettled);
+  const pendingTx = allTx.filter(t=>!t.isSettled);
+  const doneList  = allTx.filter(t=> t.isSettled);
 
   const rateInfo = `<div class="rate">BCV ${nfp(DB.bcvUsd)} Bs/$ · € ${nfp(DB.bcvEur)} Bs/€ · Par ${nfp(DB.parUsd)} Bs/$</div>`;
 
+  if(typeof _settleFilter==='undefined') window._settleFilter='';
+  const activeFilter = window._settleFilter;
+
+  const involvedPeople = [...new Set(pendingTx.flatMap(t=>[...t.from.members,...t.to.members]))].filter(p=>!VIRTUAL.has(p));
+
+  const filterBar = involvedPeople.length > 1 ? `<div class="settle-filter">
+    <button class="sfbtn ${!activeFilter?'on':''}" onclick="setSettleFilter('')">Todos</button>
+    ${involvedPeople.map(p=>`<button class="sfbtn ${activeFilter===p?'on':''}" onclick="setSettleFilter('${p}')">${avatar(p)}<span>${disp(p)}</span></button>`).join('')}
+  </div>` : '';
+
+  const filtered = activeFilter
+    ? pendingTx.filter(t=>t.from.members.includes(activeFilter)||t.to.members.includes(activeFilter))
+    : pendingTx;
+
+  const pendingUSD = filtered.filter(t=>t.payType!=='Bs');
+  const pendingBs  = filtered.filter(t=>t.payType==='Bs');
+  const hasBoth    = pendingUSD.length>0 && pendingBs.length>0;
+
   let html = `<div class="settle-head">
     <div class="top">
-      <div class="big">${pending.length}</div>
-      <div class="lbl">${pending.length===1?'transferencia pendiente':'transferencias pendientes'}</div>
+      <div class="big">${filtered.length}</div>
+      <div class="lbl">${filtered.length===1?'transferencia pendiente':'transferencias pendientes'}${activeFilter?' · '+disp(activeFilter):''}</div>
     </div>
     ${rateInfo}
-  </div>`;
+  </div>
+  ${filterBar}`;
 
-  if(pending.length===0){
+  if(filtered.length===0){
     html += `<div class="allset" style="padding:22px 20px"><div class="em">🎉</div><div class="t1" style="font-size:1.1rem">¡Todo pagado!</div><div class="t2">Todas las transferencias han sido confirmadas.</div></div>`;
   } else {
-    html += `<div class="settle-section">${pending.map(txCard).join('')}</div>`;
+    if(hasBoth){
+      html += `<div class="settle-sep"><span>💵 Dólares</span></div>`;
+      html += `<div class="settle-section">${pendingUSD.map(txCard).join('')}</div>`;
+      html += `<div class="settle-sep"><span>🇻🇪 Bolívares</span></div>`;
+      html += `<div class="settle-section">${pendingBs.map(txCard).join('')}</div>`;
+    } else {
+      html += `<div class="settle-section">${filtered.map(txCard).join('')}</div>`;
+    }
   }
 
   if(doneList.length>0){
@@ -1615,6 +1650,8 @@ function renderSettle(){
 
   el.innerHTML = html;
 }
+
+function setSettleFilter(p){ window._settleFilter=p; renderSettle(); }
 
 // Unidireccional: saldar en pareja → salda los indiv correspondientes
 // Saldar en indiv NO afecta la vista de pareja
@@ -1776,21 +1813,26 @@ function payerSplitEqual(){
 function payerSum(){ return Object.values(form.payers).reduce((s,v)=>s+(parseFloat(v)||0),0); }
 function updatePayerNote(){
   const note=document.getElementById('payerNote'); if(!note) return;
-  const ps=Object.keys(form.payers); const amt=parseFloat(document.getElementById('fAmount').value)||0;
+  const ps=Object.keys(form.payers);
+  const rawAmt=parseFloat(document.getElementById('fAmount').value)||0;
+  // Convertir a unidad nativa para mostrar correctamente
+  const fdate=document.getElementById('fDate')?.value||'';
+  const dr=rateForDate(fdate);
+  const nativeAmt=form.payType==='Bs'?toNativeWithRates(rawAmt,form.inputCur,dr):rawAmt;
+  const toNative=v=>form.payType==='Bs'?toNativeWithRates(parseFloat(v)||0,form.inputCur,dr):parseFloat(v)||0;
   if(!ps.length){ note.innerHTML='<span class="warn">Elige al menos a una persona que pagó.</span>'; return; }
   const sum=payerSum();
+  const nativeSum=toNative(sum);
   if(ps.length===1){
-    note.innerHTML=`<span>${disp(ps[0])} pagó todo${sum>0?' ('+fmtNative(sum,form.payType)+')':''}</span>`;
+    note.innerHTML=`<span>${disp(ps[0])} pagó todo${sum>0?' ('+fmtNative(nativeSum,form.payType)+')':''}</span>`;
     return;
   }
-  const diff=+(amt-sum).toFixed(2);
-  if(amt>0 && Math.abs(diff)>=0.01){
-    note.innerHTML=`<span class="warn">${diff>0?'Falta':'Sobra'} ${fmtNative(Math.abs(diff),form.payType)} para completar el total.</span>
+  const diff=+(rawAmt-sum).toFixed(2);
+  if(rawAmt>0 && Math.abs(diff)>=0.01){
+    note.innerHTML=`<span class="warn">${diff>0?'Falta':'Sobra'} ${fmtNative(toNative(Math.abs(diff)),form.payType)} para completar el total.</span>
       <button onclick="payerSplitEqual()">Repartir igual</button>`;
-  } else if(ps.length===1){
-    note.innerHTML=`<span>${disp(ps[0])} pagó todo</span>`;
   } else {
-    note.innerHTML=`<span class="ok">✓ ${ps.length} personas · cuadra (${fmtNative(sum,form.payType)})</span>`;
+    note.innerHTML=`<span class="ok">✓ ${ps.length} personas · cuadra (${fmtNative(nativeSum,form.payType)})</span>`;
   }
 }
 
@@ -1824,15 +1866,19 @@ function onAmountChange(){ updateSplitNote(); updatePayerNote(); renderRateType(
 function exactSumUSD(){ let s=0; form.parts.forEach(p=> s+=parseFloat(form.exact[p])||0); return s; }
 function updateSplitNote(){
   const note = document.getElementById('splitNote');
-  const amt = parseFloat(document.getElementById('fAmount').value)||0;
+  const rawAmt = parseFloat(document.getElementById('fAmount').value)||0;
   const n = form.parts.size;
+  // Convertir el monto a la unidad nativa del payType para mostrar correctamente
+  const fdate = document.getElementById('fDate')?.value||'';
+  const dr = rateForDate(fdate);
+  const nativeAmt = form.payType==='Bs' ? toNativeWithRates(rawAmt, form.inputCur, dr) : rawAmt;
   if(form.mode==='equal'){
     if(n===0){ note.innerHTML=`<span class="warn">Elige al menos a una persona.</span>`; return; }
-    note.innerHTML = `<span>${n} ${n===1?'persona':'personas'} · ${fmtNative(amt/n,form.payType)} c/u</span>`;
+    note.innerHTML = `<span>${n} ${n===1?'persona':'personas'} · ${fmtNative(nativeAmt/n,form.payType)} c/u</span>`;
   } else {
-    const sum = exactSumUSD(); const diff = +(amt - sum).toFixed(2);
-    if(Math.abs(diff)<0.01 && n>0){ note.innerHTML = `<span class="ok">✓ Cuadra exacto (${fmtNative(sum,form.payType)})</span>`; }
-    else { note.innerHTML = `<span class="warn">${diff>0?'Falta':'Sobra'} ${fmtNative(Math.abs(diff),form.payType)} de ${fmtNative(amt,form.payType)}</span><button onclick="splitRemainder()">Repartir resto</button>`; }
+    const sum = exactSumUSD(); const diff = +(rawAmt - sum).toFixed(2);
+    if(Math.abs(diff)<0.01 && n>0){ note.innerHTML = `<span class="ok">✓ Cuadra exacto (${fmtNative(nativeAmt,form.payType)})</span>`; }
+    else { note.innerHTML = `<span class="warn">${diff>0?'Falta':'Sobra'} ${fmtNative(Math.abs(diff),form.payType)} de ${fmtNative(nativeAmt,form.payType)}</span><button onclick="splitRemainder()">Repartir resto</button>`; }
   }
 }
 function splitRemainder(){
