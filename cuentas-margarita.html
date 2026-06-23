@@ -2374,12 +2374,12 @@ function saveExpense(){
   if(editingId){
     Object.assign(DB.expenses.find(x=>x.id===editingId),{
       desc,amount:nativeAmt,payType:form.payType,inputCur:form.inputCur,cur:form.payType,
-      repayRate,rateDate:(DB.ratesDate||''),cat:form.cat,payers,mode:form.mode,parts,exact,date
+      repayRate,rateDate,cat:form.cat,payers,mode:form.mode,parts,exact,date
     });
     toast('Gasto actualizado');
   } else {
     DB.expenses.push(mk(desc,form.cat,nativeAmt,form.payType,form.inputCur,
-      repayRate,DB.ratesDate||'',payers,parts,form.mode,exact,date));
+      repayRate,rateDate,payers,parts,form.mode,exact,date));
     toast('Gasto agregado ✓');
   }
   save(); closeForm(); renderAll();
