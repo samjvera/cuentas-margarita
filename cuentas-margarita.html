@@ -363,6 +363,63 @@ input,select{font-family:inherit;font-size:1rem;color:var(--ink)}
 .theme-btn:active{transform:scale(.92)}
 .me-chip{display:flex;align-items:center;gap:6px;padding:4px 10px 4px 4px;border-radius:999px;background:var(--surface);border:1px solid var(--line);box-shadow:var(--shadow);cursor:pointer;font-size:.76rem;font-weight:700;color:var(--ink-soft);flex:none}
 .me-chip .av{width:26px;height:26px;font-size:.7rem}
+/* gráficos de rankings */
+.ranking-chart{padding:14px 16px;display:flex;flex-direction:column;gap:10px}
+.rank-row{display:flex;align-items:center;gap:10px}
+.rank-pos{font-size:.72rem;font-weight:800;color:var(--muted);width:16px;text-align:center;flex:none}
+.rank-bar-wrap{flex:1;min-width:0}
+.rank-label{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:4px}
+.rank-name{font-size:.8rem;font-weight:700;color:var(--ink);display:flex;align-items:center;gap:5px}
+.rank-emoji{font-size:.9rem}
+.rank-val{font-size:.82rem;font-weight:800;color:var(--ink)}
+.rank-track{height:8px;background:var(--surface-2);border-radius:999px;overflow:hidden;border:1px solid var(--line)}
+.rank-fill{height:100%;border-radius:999px;transition:width .4s ease}
+.rank-fill.paid{background:linear-gradient(90deg,var(--sea),var(--sea-dark))}
+.rank-fill.spent{background:linear-gradient(90deg,var(--coral),#cc4433)}
+.rank-fill.zero{background:var(--line)}
+/* ---- gráfico pagó vs gastó ---- */
+.psc-legend{display:flex;gap:16px;margin-bottom:14px;flex-wrap:wrap}
+.psc-leg-item{display:flex;align-items:center;gap:6px;font-size:.75rem;font-weight:700;color:var(--muted)}
+.psc-leg-dot{width:10px;height:10px;border-radius:3px;flex:none}
+.psc-viz{display:flex;flex-direction:column;gap:6px}
+.psc-row{display:grid;grid-template-columns:72px 1fr 60px;align-items:center;gap:8px}
+.psc-name{font-size:.75rem;font-weight:700;color:var(--ink-soft);text-align:right;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:flex;align-items:center;justify-content:flex-end;gap:5px}
+.psc-bars{display:flex;flex-direction:column;gap:3px}
+.psc-bar-wrap{height:13px;border-radius:999px;overflow:hidden;background:var(--surface-2)}
+.psc-bar-fill{height:100%;border-radius:999px;transition:width .65s cubic-bezier(.34,1.2,.64,1);min-width:0}
+.psc-bar-pago{background:linear-gradient(90deg,#0EA5A0,#0B7E7A)}
+.psc-bar-gasto{background:linear-gradient(90deg,#FF7755,#e05530)}
+.psc-val{font-size:.69rem;font-weight:800;color:var(--ink);text-align:right;line-height:1.4}
+.psc-v2{color:var(--coral);font-weight:700}
+.psc-diff-tag{display:inline-flex;align-items:center;font-size:.65rem;font-weight:800;padding:1px 6px;border-radius:999px;margin-top:2px}
+.psc-diff-tag.pos{background:var(--pos-soft);color:var(--pos)}
+.psc-diff-tag.neg{background:var(--neg-soft);color:var(--neg)}
+.psc-diff-tag.zero{background:var(--surface-2);color:var(--muted)}
+.psc-header{display:grid;grid-template-columns:72px 1fr 60px;gap:8px;margin-bottom:10px;padding-bottom:8px;border-bottom:1px solid var(--line);align-items:center}
+.psc-sort-row{display:flex;gap:6px}
+.psc-sort-btn{font-size:.68rem;font-weight:700;padding:3px 9px;border-radius:999px;border:1px solid var(--line);background:var(--surface);color:var(--muted);cursor:pointer;transition:.15s}
+.psc-sort-btn.on{background:var(--sea);color:#fff;border-color:var(--sea)}
+.dual-rank{display:flex;flex-direction:column;gap:0}
+.dual-rank-head{display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:0 0 8px;border-bottom:1px solid var(--line);margin-bottom:2px;padding-left:0}
+.dual-rank-head span{font-size:.65rem;font-weight:800;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);text-align:right}
+.dual-rank-head .h-pago{color:var(--sea-dark);text-align:left}
+.dual-rank-head .h-gasto{color:var(--coral);text-align:left}
+.dr-row{display:flex;flex-direction:column;gap:5px;padding:10px 0;border-bottom:1px solid var(--line)}
+.dr-row:last-child{border-bottom:none}
+.dr-who{display:flex;align-items:center;gap:8px}
+.dr-name{font-size:.85rem;font-weight:700;color:var(--ink)}
+.dr-bars-wrap{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.dr-col{display:flex;flex-direction:column;gap:3px}
+.dr-bar-track{height:8px;border-radius:999px;background:var(--surface-2);overflow:hidden}
+.dr-bar-fill{height:100%;border-radius:999px;transition:width .5s cubic-bezier(.34,1.2,.64,1)}
+.dr-bar-pago{background:linear-gradient(90deg,var(--sea),var(--sea-dark))}
+.dr-bar-gasto{background:linear-gradient(90deg,#FF7755,#d94f30)}
+.dr-amt{font-size:.75rem;font-weight:800;color:var(--ink)}
+.dr-amt-row{display:flex;align-items:center;gap:5px}
+.dr-diff{display:inline-flex;align-self:flex-start;font-size:.62rem;font-weight:800;padding:1px 6px;border-radius:999px}
+.dr-diff.pos{background:var(--pos-soft);color:var(--pos)}
+.dr-diff.neg{background:var(--neg-soft);color:var(--neg)}
+.dr-diff.zero{background:var(--surface-2);color:var(--muted)}
 /* calculadora */
 .calc-row{display:flex;flex-direction:column;gap:12px}
 .calc-field{display:flex;flex-direction:column;gap:6px}
@@ -442,8 +499,10 @@ input,select{font-family:inherit;font-size:1rem;color:var(--ink)}
     <div class="sec-title">Gasto por categoría</div>
     <div class="card card-pad" id="catBreakdown"></div>
 
-    <div class="sec-title">¿Quién pagó más?</div>
-    <div class="card" id="paidRanking"></div>
+    <div class="sec-title">¿Quién pagó y quién gastó más?</div>
+    <div class="card card-pad" id="paySpendChart">
+      <div id="paySpendViz"></div>
+    </div>
   </section>
 
   <!-- ===== GASTOS ===== -->
@@ -1308,14 +1367,73 @@ function renderResumen(){
     }).join('')+`</div>`;
   }
 
-  const pr = document.getElementById('paidRanking');
-  const sorted = PEOPLE.map(p=>({p,v:paid[p]})).filter(x=>x.v>0).sort((a,b)=>b.v-a.v);
-  pr.innerHTML = sorted.length===0
-    ? `<div class="empty" style="padding:26px"><div class="t2">Quien pague primero aparecerá aquí 😎</div></div>`
-    : sorted.map(x=>`<div class="balrow" style="grid-template-columns:auto 1fr auto">${avatar(x.p)}
-        <div><div class="balname">${disp(x.p)}</div><div class="balsub">${coupleOf(x.p)?'Pareja: '+coupleLabel(coupleOf(x.p)):'Viaja solo'}</div></div>
-        <div class="balamt"><div class="n">${fmt(x.v/100)}</div><div class="t" style="color:var(--muted)">pagado</div></div></div>`).join('');
+  renderPaySpendChart(paid);
 }
+
+let _pscSort = 'pago';
+function renderPaySpendChart(paidIn){
+  const viz = document.getElementById('paySpendViz');
+  if(!viz) return;
+
+  const paid = paidIn || computeBalances().paid;
+
+  const spentC = {};
+  PEOPLE.filter(p=>!VIRTUAL.has(p)).forEach(p=>spentC[p]=0);
+  for(const exp of DB.expenses){
+    const sh = expenseSharesUSD(exp);
+    for(const [p,c] of Object.entries(sh)) if(spentC[p]!==undefined) spentC[p]+=c;
+  }
+
+  const data = PEOPLE.filter(p=>!VIRTUAL.has(p)).map(p=>({
+    p,
+    pago:  (paid[p]||0)/100,
+    gasto: (spentC[p]||0)/100,
+  })).filter(d=>d.pago>0||d.gasto>0).sort((a,b)=>b.pago-a.pago);
+
+  if(data.length===0){
+    viz.innerHTML=`<div style="text-align:center;padding:24px;color:var(--muted)">Aún no hay gastos.</div>`;
+    return;
+  }
+
+  const maxPago  = Math.max(1,...data.map(d=>d.pago));
+  const maxGasto = Math.max(1,...data.map(d=>d.gasto));
+  const maxAll   = Math.max(maxPago, maxGasto);
+
+  const rows = data.map(d=>{
+    const pagoPct  = Math.round(d.pago /maxAll*100);
+    const gastoPct = Math.round(d.gasto/maxAll*100);
+    const diff     = d.pago - d.gasto;
+    const diffCls  = diff > 0.5 ? 'pos' : diff < -0.5 ? 'neg' : 'zero';
+    const diffLbl  = diff > 0.5 ? `+${fmt(diff)}` : diff < -0.5 ? `${fmt(diff)}` : '≈';
+    return `<div class="dr-row">
+      <div class="dr-who">${avatar(d.p)}<span class="dr-name">${disp(d.p)}</span></div>
+      <div class="dr-bars-wrap">
+        <div class="dr-col">
+          <div class="dr-bar-track"><div class="dr-bar-fill dr-bar-pago" style="width:${Math.max(pagoPct,2)}%"></div></div>
+          <div class="dr-amt-row"><span class="dr-amt" style="color:var(--sea-dark)">${fmt(d.pago)}</span></div>
+        </div>
+        <div class="dr-col">
+          <div class="dr-bar-track"><div class="dr-bar-fill dr-bar-gasto" style="width:${Math.max(gastoPct,2)}%"></div></div>
+          <div class="dr-amt-row">
+            <span class="dr-amt" style="color:var(--coral)">${fmt(d.gasto)}</span>
+            <span class="dr-diff ${diffCls}">${diffLbl}</span>
+          </div>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+
+  viz.innerHTML = `<div class="dual-rank">
+    <div class="dual-rank-head">
+      <span class="h-pago">💰 Pagó</span>
+      <span class="h-gasto">🛍️ Gastó</span>
+    </div>
+    ${rows}
+  </div>`;
+}
+function setPscSort(s){ _pscSort=s; renderPaySpendChart(); }
+function showScatterTip(){}
+function hideScatterTip(){}
 
 /* ============ Gastos ============ */
 let catFilterVal = 'all';
