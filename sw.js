@@ -1,15 +1,13 @@
 /* ============================================================
-   Neteo · Service Worker
+   Neteo · Service Worker v2
    ============================================================ */
 
-const CACHE_NAME = 'neteo-v1';
+const CACHE_NAME = 'neteo-v2';
 
-// Solo cacheamos el HTML principal (los íconos van inline en el HTML)
 const SHELL_ASSETS = [
-  './cuentas-margarita.html',
+  '/cuentas-margarita/cuentas-margarita.html',
 ];
 
-// Dominios que NUNCA deben cachearse (Firebase tiempo real)
 const NETWORK_ONLY_HOSTS = [
   'firebaseio.com',
   'firebase.googleapis.com',
@@ -37,19 +35,16 @@ self.addEventListener('activate', event => {
 self.addEventListener('fetch', event => {
   const url = new URL(event.request.url);
 
-  // Network Only para Firebase
   if (NETWORK_ONLY_HOSTS.some(host => url.hostname.includes(host))) {
     event.respondWith(fetch(event.request));
     return;
   }
 
-  // Network Only para POST/PUT/DELETE
   if (event.request.method !== 'GET') {
     event.respondWith(fetch(event.request));
     return;
   }
 
-  // Cache First para el shell
   if (url.origin === self.location.origin) {
     event.respondWith(
       caches.match(event.request).then(cached => {
@@ -66,7 +61,6 @@ self.addEventListener('fetch', event => {
     return;
   }
 
-  // Network First para el resto
   event.respondWith(
     fetch(event.request).catch(() => caches.match(event.request))
   );
