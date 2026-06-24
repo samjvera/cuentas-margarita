@@ -1,0 +1,38 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <!-- Fondo sólido (color primario de la app) — necesario para maskable -->
+  <rect width="512" height="512" fill="#0EA5A0"/>
+
+  <!-- Safe zone: 80% del canvas = 410px centrado en 51px de margen -->
+  <!-- Todo el contenido visual vive dentro de 102–410 px -->
+
+  <!-- Sol -->
+  <circle cx="256" cy="160" r="54" fill="#F5C842"/>
+  <!-- Rayos del sol -->
+  <g stroke="#F5C842" stroke-width="10" stroke-linecap="round">
+    <line x1="256" y1="88"  x2="256" y2="72"/>
+    <line x1="256" y1="232" x2="256" y2="248"/>
+    <line x1="184" y1="160" x2="168" y2="160"/>
+    <line x1="328" y1="160" x2="344" y2="160"/>
+    <line x1="204" y1="108" x2="193" y2="97"/>
+    <line x1="308" y1="212" x2="319" y2="223"/>
+    <line x1="308" y1="108" x2="319" y2="97"/>
+    <line x1="204" y1="212" x2="193" y2="223"/>
+  </g>
+
+  <!-- Tronco de palma -->
+  <path d="M248 420 Q244 340 252 280 Q258 260 264 280 Q272 340 268 420 Z" fill="#8B5E3C"/>
+
+  <!-- Copa izquierda -->
+  <path d="M252 285 Q200 240 155 255 Q170 275 200 270 Q190 290 210 295 Q225 295 252 285 Z" fill="#22C55E"/>
+  <!-- Copa derecha -->
+  <path d="M262 285 Q314 240 359 255 Q344 275 314 270 Q324 290 304 295 Q289 295 262 285 Z" fill="#22C55E"/>
+  <!-- Copa central -->
+  <path d="M250 285 Q246 230 256 210 Q266 230 262 285 Z" fill="#16A34A"/>
+
+  <!-- Ola del mar -->
+  <path d="M102 390 Q150 370 200 385 Q250 400 300 385 Q350 370 410 390 L410 420 L102 420 Z" fill="#BAE6FD" opacity="0.85"/>
+  <path d="M102 405 Q155 388 210 402 Q265 416 320 402 Q370 388 410 405 L410 430 L102 430 Z" fill="#7DD3FC" opacity="0.7"/>
+
+  <!-- Arena / tierra -->
+  <rect x="102" y="420" width="308" height="30" rx="4" fill="#F5DEB3"/>
+</svg>
